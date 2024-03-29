@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "postinstall": "npm run build",
     "prepublish": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
