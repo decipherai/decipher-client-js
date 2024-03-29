@@ -1,6 +1,6 @@
 {
   "name": "@decipher-sdk/express",
-  "version": "0.1.24",
+  "version": "0.1.25",
   "description": "Official Decipher SDK for Express",
   "main": "dist/decipher-error-handler.js",
   "exports": {
