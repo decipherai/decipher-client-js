@@ -16,6 +16,7 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "@types/express": "^4.17.21",
+    "@types/node": "^20.11.30",
     "typescript": "^5.3.3"
   },
   "dependencies": {
