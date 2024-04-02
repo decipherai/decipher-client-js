@@ -1,0 +1,25 @@
+{
+  "name": "@decipher-sdk/sourcemap-uploader",
+  "version": "0.0.1",
+  "description": "Sourcemap uploader for Decipher",
+  "main": "src/index.js",
+  "bin": "src/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module",
+  "author": "rohandas@getdecipher.com",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/figlet": "^1.5.8",
+    "@types/node": "^20.12.2",
+    "typescript": "^5.4.3"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "figlet": "^1.7.0",
+    "glob": "^10.3.12",
+    "node-fetch": "^3.3.2"
+  }
+}
