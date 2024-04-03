@@ -16,21 +16,6 @@ export async function validateAndUploadSourcemaps(
   const serverUrl =
     process.env.DECIPHER_SERVER_URL || "https://prod.getdecipher.com";
   try {
-    // Validate the API key
-    const validationResponse = await fetch(`${serverUrl}/api/validate_key`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${key}`,
-      },
-    });
-    const validationData: any = await validationResponse.json();
-
-    if (!validationData.success) {
-      console.error("API key validation failed.");
-      return;
-    }
-
     // Find all sourcemap files in the specified path
     const sourcemaps = glob.sync("**/*.{js,js.map}", {
       cwd: path,
@@ -40,13 +25,8 @@ export async function validateAndUploadSourcemaps(
 
     if (sourcemaps.length === 0) {
       console.error(
-        "No .js or .js.map files found in the specified directory. Please double check that you have generated sourcemaps for your app."
+        "No .js or .js.map files found in the specified directory. Please double check that you have generated sourcemaps for your app and specified the 'path' argument correctly."
       );
-      return;
-    }
-
-    if (sourcemaps.length === 0) {
-      console.log("No sourcemaps found in the specified path.");
       return;
     }
 
