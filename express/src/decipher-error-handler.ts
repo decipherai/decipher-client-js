@@ -1,15 +1,11 @@
+import { DecipherContext, DecipherHandlerConfig } from "./types";
 import { collectAndSend } from "./utils/collect-and-send";
 import { DecipherConsole } from "./utils/decipher-console";
-import { DecipherHandlerConfig } from "./utils/handler-config";
-import { NextFunction, Request as ExpressRequest, Response as ExpressResponse} from "express";
-
-interface DecipherContext {
-  config: DecipherHandlerConfig;
-  method: string;
-  url: string;
-  headers: NodeJS.Dict<string | string[]>;
-  decipherConsole: DecipherConsole;
-}
+import {
+  NextFunction,
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+} from "express";
 
 export function DecipherRequestHandler(config: DecipherHandlerConfig) {
   return async function (
