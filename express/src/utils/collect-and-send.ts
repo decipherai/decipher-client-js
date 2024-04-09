@@ -132,7 +132,7 @@ const sendErrorToService = async (
         `${
           process.env.DECIPHER_SERVER_URL || "https://prod.getdecipher.com"
         }/api/exception_upload`,
-        JSON.stringify(payload),
+        payload,
         {
           headers: {
             "Content-Type": "application/json",

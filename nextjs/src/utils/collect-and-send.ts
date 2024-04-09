@@ -8,7 +8,7 @@ async function extractTrpcRequestData(opts: any): Promise<{
   headers: Record<string, string | string[]>;
   body: string;
 }> {
-  const requestBody = opts.getRawInput && await opts.getRawInput();
+  const requestBody = opts.getRawInput && (await opts.getRawInput());
 
   return {
     url: "tRPC",
@@ -56,10 +56,7 @@ export async function collectAndSend(
   }
 }
 
-export async function collectAndSendTrpc(
-  opts: any,
-  data: CollectAndSendData
-) {
+export async function collectAndSendTrpc(opts: any, data: CollectAndSendData) {
   try {
     const errorTimestamp = new Date().toISOString();
     const parsedData = await extractTrpcRequestData(opts);
@@ -176,7 +173,7 @@ const sendErrorToService = async (
         `${
           process.env.DECIPHER_SERVER_URL || "https://prod.getdecipher.com"
         }/api/exception_upload`,
-        JSON.stringify(payload),
+        payload,
         {
           headers: {
             "Content-Type": "application/json",
