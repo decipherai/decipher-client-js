@@ -1,14 +1,4 @@
-interface ConsoleMethods {
-  log: ConsoleMethod;
-  warn: ConsoleMethod;
-  error: ConsoleMethod;
-  info: ConsoleMethod;
-  debug: ConsoleMethod;
-  [key: string]: ConsoleMethod | undefined;
-}
-
-// Define the ConsoleMethod type
-type ConsoleMethod = (...args: any[]) => void;
+import { ConsoleMethods } from "../types";
 
 export class DecipherConsole {
   private originalConsoleMethods: ConsoleMethods;
