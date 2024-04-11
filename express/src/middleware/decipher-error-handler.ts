@@ -80,9 +80,9 @@ export const errorHandler = (
       500, // statusCode
       currentContext?.consoleMessages || [], // Collect console messages
       true, // isUncaughtException
-      Decipher.settings.codebase_id ?? "",
-      Decipher.settings.customer_id ?? "",
-      !!Decipher.settings.exclude_request_body,
+      Decipher.settings.codebaseId ?? "",
+      Decipher.settings.customerId ?? "",
+      !!Decipher.settings.excludeRequestBody,
       errorToSend
     );
   } catch (error) {
@@ -110,9 +110,9 @@ function handleNon200Response(req: ExpressRequest, body: any, statusCode: number
     statusCode,
     currentContext?.consoleMessages || [], // Collect console messages
     false, // isUncaughtException
-    Decipher.settings.codebase_id ?? "",
-    Decipher.settings.customer_id ?? "",
-    !!Decipher.settings.exclude_request_body,
+    Decipher.settings.codebaseId ?? "",
+    Decipher.settings.customerId ?? "",
+    !!Decipher.settings.excludeRequestBody,
     context?.capturedError
   );
 }

@@ -21,3 +21,10 @@ export interface ConsoleMethods {
   debug: ConsoleMethod;
   [key: string]: ConsoleMethod | undefined;
 }
+
+export interface DecipherHandlerConfig {
+  codebaseId: string;
+  customerId: string;
+  excludeRequestBody?: boolean;
+  environment?: string;
+}
