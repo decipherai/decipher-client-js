@@ -1,6 +1,7 @@
 import axios from "axios";
 
 import type { NextApiRequest } from "next";
+import { DecipherHandlerConfig } from "./handler-config";
 
 async function extractTrpcRequestData(opts: any): Promise<{
   url: string;
@@ -23,9 +24,7 @@ interface CollectAndSendData {
   statusCode: number;
   messages: any;
   isUncaughtException: boolean;
-  codebaseId: string;
-  customerId: string;
-  excludeRequestBody: boolean;
+  config: DecipherHandlerConfig;
   error?: Error;
 }
 
@@ -35,7 +34,10 @@ export async function collectAndSend(
 ): Promise<void> {
   try {
     const errorTimestamp = new Date().toISOString();
-    const parsedData = await extractRequestData(req, data.excludeRequestBody);
+    const parsedData = await extractRequestData(
+      req,
+      !!data.config.excludeRequestBody
+    );
     // Non-200s get logged; uncaught exceptions are caught below (in the `catch` block)
     sendErrorToService(
       data.error?.stack || "",
@@ -48,8 +50,7 @@ export async function collectAndSend(
       data.statusCode,
       data.messages,
       data.isUncaughtException,
-      data.codebaseId,
-      data.customerId
+      data.config,
     );
   } catch (error) {
     console.error("Failure sending to Decipher", error);
@@ -72,8 +73,7 @@ export async function collectAndSendTrpc(opts: any, data: CollectAndSendData) {
       data.statusCode,
       data.messages,
       data.isUncaughtException,
-      data.codebaseId,
-      data.customerId
+      data.config
     );
   } catch (error) {
     console.error("Failure sending to Decipher for Trpc", error);
@@ -96,7 +96,7 @@ async function extractRequestData(
   let requestBody = "";
   if (excludeRequestBody) {
     requestBody =
-      "Request body not captured by Decipher due to `exclude_request_body` handler setting.";
+      "Request body not captured by Decipher due to `excludeRequestBody` handler setting.";
   } else if (hasRequestBody) {
     try {
       if ("body" in req && "query" in req) {
@@ -150,14 +150,14 @@ const sendErrorToService = async (
   statusCode: number,
   messages: any,
   isUncaughtException: boolean,
-  codebaseId: string,
-  customerId: string
+  config: DecipherHandlerConfig,
 ) => {
+  
   const payload = {
-    codebase_id: codebaseId,
+    codebase_id: config.codebaseId,
     timestamp: timestamp,
     error_stack: errorStack,
-    customer_id: customerId,
+    customer_id: config.customerId,
     request_endpoint: requestEndpoint,
     request_headers: requestHeaders,
     request_url: requestURL,
@@ -165,7 +165,8 @@ const sendErrorToService = async (
     response_body: respBody,
     status_code: statusCode,
     is_uncaught_exception: isUncaughtException,
-    messages: messages,
+    messages,
+    environment: config.environment,
   };
   try {
     axios
@@ -173,7 +174,7 @@ const sendErrorToService = async (
         `${
           process.env.DECIPHER_SERVER_URL || "https://prod.getdecipher.com"
         }/api/exception_upload`,
-        payload,
+        JSON.stringify(payload),
         {
           headers: {
             "Content-Type": "application/json",

@@ -22,10 +22,11 @@ export function withDecipher(
   handler: AppRouterRequestHandler | AppRouterNextRequestHandler,
   config: DecipherHandlerConfig
 ): typeof handler {
-  const codebaseId = config.codebase_id;
-  const customerId = config.customer_id;
-  const excludeRequestBody = !!config.exclude_request_body;
-
+  const filledConfig = {
+    ...config,
+    excludeRequestBody: !!config.excludeRequestBody,
+    environment: config.environment || "production",
+  };
   return async (request: Request | NextRequest) => {
     let originalConsole;
     let decipherConsole;
@@ -39,7 +40,7 @@ export function withDecipher(
       decipherConsole.instrumentConsole();
       originalConsole = console;
       handlerInvoked = true;
-      if (!excludeRequestBody) {
+      if (!filledConfig.excludeRequestBody) {
         // Clone the request if we're capturing body, so that we can
         // access the body stream without affecting the original request's stream.
         decipherRequest = request.clone();
@@ -59,9 +60,7 @@ export function withDecipher(
           statusCode: response.status,
           messages: decipherConsole.getMessages(),
           isUncaughtException: false,
-          codebaseId,
-          customerId,
-          excludeRequestBody,
+          config: filledConfig,
         });
       }
       return response;
@@ -76,9 +75,7 @@ export function withDecipher(
               statusCode: 500,
               messages: decipherConsole.getMessages(),
               isUncaughtException: true,
-              codebaseId,
-              customerId,
-              excludeRequestBody,
+              config: filledConfig,
               error,
             });
           }
@@ -92,9 +89,7 @@ export function withDecipher(
               statusCode: 500,
               messages: decipherConsole.getMessages(),
               isUncaughtException: true,
-              codebaseId,
-              customerId,
-              excludeRequestBody,
+              config: filledConfig,
             });
           }
         }
@@ -132,9 +127,11 @@ export function wrapApiHandlerWithDecipher<T>(
   handler: PageRouterHandler<T>,
   config: DecipherHandlerConfig
 ): typeof handler {
-  const codebaseId = config.codebase_id;
-  const customerId = config.customer_id;
-  const excludeRequestBody = !!config.exclude_request_body;
+  const filledConfig = {
+    ...config,
+    excludeRequestBody: !!config.excludeRequestBody,
+    environment: config.environment || "production",
+  };
 
   return async (req: NextApiRequest, res: NextApiResponse<T>) => {
     let originalConsole;
@@ -184,9 +181,7 @@ export function wrapApiHandlerWithDecipher<T>(
           statusCode: res.statusCode,
           messages: decipherConsole.getMessages(),
           isUncaughtException: false,
-          codebaseId,
-          customerId,
-          excludeRequestBody,
+          config: filledConfig,
         });
         return result;
       }
@@ -201,9 +196,7 @@ export function wrapApiHandlerWithDecipher<T>(
               statusCode: 500,
               messages: decipherConsole.getMessages(),
               isUncaughtException: true,
-              codebaseId,
-              customerId,
-              excludeRequestBody,
+              config: filledConfig,
               error,
             });
           }
@@ -216,9 +209,7 @@ export function wrapApiHandlerWithDecipher<T>(
               statusCode: 500,
               messages: decipherConsole.getMessages(),
               isUncaughtException: true,
-              codebaseId,
-              customerId,
-              excludeRequestBody,
+              config: filledConfig,
             });
           }
         }
@@ -247,9 +238,11 @@ export function decipherTrpcMiddleware(config: DecipherHandlerConfig) {
     let decipherConsole;
     let handlerInvoked = false;
     let result;
-    const codebaseId = config.codebase_id;
-    const customerId = config.customer_id;
-    const excludeRequestBody = !!config.exclude_request_body;
+    const filledConfig = {
+      ...config,
+      excludeRequestBody: !!config.excludeRequestBody,
+      environment: config.environment || "production",
+    };
     try {
       decipherConsole = new DecipherConsole();
       decipherConsole.instrumentConsole();
@@ -265,9 +258,7 @@ export function decipherTrpcMiddleware(config: DecipherHandlerConfig) {
             statusCode: 500,
             messages: decipherConsole.getMessages(),
             isUncaughtException: true,
-            codebaseId,
-            customerId,
-            excludeRequestBody,
+            config: filledConfig,
             error: result.error,
           });
         } else {
@@ -276,9 +267,7 @@ export function decipherTrpcMiddleware(config: DecipherHandlerConfig) {
             statusCode: 500,
             messages: decipherConsole.getMessages(),
             isUncaughtException: true,
-            codebaseId,
-            customerId,
-            excludeRequestBody,
+            config: filledConfig,
           });
         }
       }
