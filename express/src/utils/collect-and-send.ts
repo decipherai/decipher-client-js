@@ -14,6 +14,8 @@ export async function collectAndSend(
   error?: Error
 ): Promise<void> {
   try {
+    console.log("Kicking off collect and send")
+    console.log(error)
     const errorTimestamp = new Date().toISOString();
     const parsedData = await extractRequestData(req, excludeRequestBody);
     // Non-200s get logged; uncaught exceptions are caught below (in the `catch` block)
@@ -132,7 +134,7 @@ const sendErrorToService = async (
         `${
           process.env.DECIPHER_SERVER_URL || "https://prod.getdecipher.com"
         }/api/exception_upload`,
-        payload,
+        JSON.stringify(payload),
         {
           headers: {
             "Content-Type": "application/json",

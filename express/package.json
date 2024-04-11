@@ -4,8 +4,9 @@
   "description": "Official Decipher SDK for Express",
   "main": "dist/decipher-error-handler.js",
   "exports": {
-    ".": "./dist/decipher-error-handler.js"
+    ".": "./dist/index.js"
   },
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
     "postinstall": "npm run build",
@@ -22,10 +23,10 @@
     "jest": "^29.7.0",
     "supertest": "^6.3.4",
     "ts-jest": "^29.1.2",
-    "typescript": "^5.3.3",
     "jest-mock-express": "^0.1.1"
   },
   "dependencies": {
+    "typescript": "^5.3.3",
     "axios": "^1.6.7",
     "express": "^4.18.3"
   }

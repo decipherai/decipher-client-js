@@ -1,10 +1,10 @@
+import Decipher from '../utils/decipher'; // Importing the Decipher singleton from @decipher.ts
 import { ConsoleMethods } from "../types";
 
 export class DecipherConsole {
   private originalConsoleMethods: ConsoleMethods;
   private isInstrumented: boolean = false;
   private consoleMessages: any[] = [];
-  private isProcessingLog: boolean = false;
 
   constructor() {
     this.originalConsoleMethods = {
@@ -16,21 +16,39 @@ export class DecipherConsole {
     };
   }
 
+  public resetConsole() {
+    // Reset each console method to its original implementation
+    Object.keys(this.originalConsoleMethods).forEach(methodKey => {
+      const method = this.originalConsoleMethods[methodKey];
+      if (method) {
+        (console as any)[methodKey] = method;
+      }
+    });
+  }
+
   private processLog(level: keyof ConsoleMethods, ...args: any[]) {
-    if (this.isProcessingLog) {
+    if (Decipher.getProcessingLogState()) {
       this.originalConsoleMethods[level]?.apply(console, args);
       return; // Check if a log is already being processed to prevent recursion
     }
-    this.isProcessingLog = true;
+    Decipher.setProcessingLogState(true);
 
-    const timestamp = new Date().toISOString();
-    const messageParts = args.map((arg) =>
-      typeof arg === "object" ? safeStringify(arg) : String(arg)
-    );
-    const message = messageParts.join(" ");
-    this.consoleMessages.push({ message, level, timestamp });
-    this.originalConsoleMethods[level]?.apply(console, args);
-    this.isProcessingLog = false;
+    try {
+      const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
+      if (currentContext) {
+        const timestamp = new Date().toISOString();
+        const messageParts = args.map((arg) =>
+          typeof arg === "object" ? safeStringify(arg) : String(arg)
+        );
+        const message = messageParts.join(" ");
+        Decipher.updateContext({
+          consoleMessages: [...currentContext.consoleMessages, { message, level, timestamp }]
+        });
+        this.originalConsoleMethods[level]?.apply(console, args);
+      }
+    } finally {
+      Decipher.setProcessingLogState(false);    
+    }
   }
 
   public instrumentConsole() {
@@ -66,21 +84,26 @@ export class DecipherConsole {
 }
 
 function safeStringify(obj: unknown, indent = 2): string {
-  if (typeof obj !== "object" || obj === null) {
-    return String(obj);
-  }
 
-  let cache: any[] | null = [];
-  const retVal = JSON.stringify(
-    obj,
-    (key, value) =>
-      typeof value === "object" && value !== null
-        ? cache!.includes(value)
-          ? undefined // Duplicate reference found, discard key
-          : cache!.push(value) && value // Store value in our collection
-        : value,
-    indent
-  );
-  cache = null;
-  return retVal;
+  try { 
+    if (typeof obj !== "object" || obj === null) {
+      return String(obj);
+    }
+
+    let cache: any[] | null = [];
+    const retVal = JSON.stringify(
+      obj,
+      (key, value) =>
+        typeof value === "object" && value !== null
+          ? cache!.includes(value)
+            ? undefined // Duplicate reference found, discard key
+            : cache!.push(value) && value // Store value in our collection
+          : value,
+      indent
+    );
+      cache = null;
+      return retVal;
+  } catch (e) {
+    return 'Error in stringification: ' + e;
+  }
 }
