@@ -15,7 +15,7 @@ describe('Express application behavior', () => {
   
     beforeAll(() => {
       app = express();
-      Decipher.init({ codebase_id: 'test-codebase', customer_id: 'test-customer'})
+      Decipher.init({ codebaseId: 'test-codebase', customerId: 'test-customer'})
 
       // Define a sample route that does not produce an error
       app.get('/no-error', (req, res) => {
@@ -44,7 +44,7 @@ describe('Express application behavior', () => {
     beforeAll(() => {
       app = express();
 
-      Decipher.init({ codebase_id: 'test-codebase', customer_id: 'test-customer'})
+      Decipher.init({ codebaseId: 'test-codebase', customerId: 'test-customer'})
 
       app.use(Decipher.Handlers.requestHandler());
   
@@ -84,7 +84,7 @@ describe('Express application behavior', () => {
   
     beforeAll(() => {
       app = express();
-      Decipher.init({ codebase_id: 'test-codebase', customer_id: 'test-customer' });
+      Decipher.init({ codebaseId: 'test-codebase', customerId: 'test-customer' });
   
       app.get('/trigger-error', async (req, res) => {
         try {

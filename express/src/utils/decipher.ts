@@ -1,6 +1,7 @@
 import { DecipherConsole } from "../utils/decipher-console";
 // Utilizing AsyncLocalStorage from Node.js to handle asynchronous context management
 const { AsyncLocalStorage } = require('node:async_hooks');
+import type { DecipherHandlerConfig } from '../types';
 
 // Creating an instance of AsyncLocalStorage to store context specific to each request
 const asyncLocalStorage = new AsyncLocalStorage();
@@ -19,12 +20,10 @@ class Decipher {
   private static instance: Decipher;
   private _isProcessingLog: boolean = false;
   
-  public settings: {
-    codebase_id?: string;
-    customer_id?: string;
-    exclude_request_body?: boolean;
-    environment?: string;
-  } = {};
+  public settings: DecipherHandlerConfig = {
+    codebaseId: '',
+    customerId: ''
+  };
 
   private constructor() {}
 
@@ -37,7 +36,7 @@ class Decipher {
   }
 
 // Add logging to init method to confirm settings are being initialized
-public init(config: { codebase_id: string; customer_id: string; exclude_request_body?: boolean; environment?: string }): void {
+public init(config: DecipherHandlerConfig): void {
   this.settings = {
     ...this.settings,
     ...config
