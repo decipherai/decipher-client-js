@@ -1,0 +1,36 @@
+{
+  "name": "app-router-example",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@decipher-sdk/nextjs": "file:../../../decipher-client-js/nextjs/decipher-sdk-nextjs-0.1.29.tgz",
+    "@tanstack/react-query": "^5.27.5",
+    "@trpc/client": "^11.0.0-next-beta.318",
+    "@trpc/next": "^11.0.0-next-beta.318",
+    "@trpc/react-query": "^11.0.0-next-beta.318",
+    "@trpc/server": "^11.0.0-next-beta.318",
+    "next": "14.1.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "rrweb-player": "^1.0.0-alpha.4",
+    "yarn": "^1.22.21",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.1.0",
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
+  }
+}

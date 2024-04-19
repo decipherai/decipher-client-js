@@ -1,22 +1,10 @@
+import { ConsoleMethods } from "../types";
 import Decipher from '../decipher'; // Importing the Decipher singleton from @decipher.ts
-
-interface ConsoleMethods {
-  log: ConsoleMethod;
-  warn: ConsoleMethod;
-  error: ConsoleMethod;
-  info: ConsoleMethod;
-  debug: ConsoleMethod;
-  [key: string]: ConsoleMethod | undefined;
-}
-
-// Define the ConsoleMethod type
-type ConsoleMethod = (...args: any[]) => void;
 
 export class DecipherConsole {
   private originalConsoleMethods: ConsoleMethods;
   private isInstrumented: boolean = false;
   private consoleMessages: any[] = [];
-  private isProcessingLog: boolean = false;
 
   constructor() {
     this.originalConsoleMethods = {
@@ -27,6 +15,7 @@ export class DecipherConsole {
       debug: console.debug,
     };
   }
+
   public resetConsole() {
     // Reset each console method to its original implementation
     Object.keys(this.originalConsoleMethods).forEach(methodKey => {
