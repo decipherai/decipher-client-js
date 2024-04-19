@@ -34,7 +34,7 @@ export function withDecipher(
 
     let responseBody: any;
     try {
-        Decipher.runWithContext({
+        return await Decipher.runWithContext({
           // method: request.method,
           // url: request.url,
           // headers: {},
@@ -130,8 +130,6 @@ export function withDecipher(
       console.log('[Decipher] error in the catch block 1')
       return new Response();
     }
-    console.log('[Decipher] error in the catch block 2')
-    return new Response();
   };
 }
 

@@ -2,7 +2,7 @@ import { DecipherConsole } from "./utils/decipher-console";
 // Utilizing AsyncLocalStorage from Node.js to handle asynchronous context management
 const { AsyncLocalStorage } = require('node:async_hooks');
 import type { DecipherHandlerConfig } from './utils/handler-config';
-import { withDecipher } from './decipher-error-handler';
+import { withDecipher, wrapApiHandlerWithDecipher } from './decipher-error-handler';
 
 // Creating an instance of AsyncLocalStorage to store context specific to each request
 const asyncLocalStorage = new AsyncLocalStorage();
@@ -72,8 +72,9 @@ public updateContext(update: Partial<DecipherContext>): void {
 }
 
 // Add logging to runWithContext to see when a new context is being run
-public runWithContext(context: DecipherContext, fn: () => void): void {
-  asyncLocalStorage.run(context, fn);
+public async runWithContext(context: DecipherContext, fn: () => Promise<Response>): Promise<Response> {
+  const result = await asyncLocalStorage.run(context, fn);
+  return result;  // Returning the Response object obtained from fn
 }
 
 // Add logging to getCurrentContext to see when context is retrieved
@@ -83,6 +84,8 @@ public getCurrentContext(): DecipherContext | undefined {
 }
 
 public withDecipher = withDecipher;
+
+public wrapApiHandlerWithDecipher = wrapApiHandlerWithDecipher;
 
 // public withDecipher(handler: any, config: DecipherHandlerConfig): typeof handler {
 //   console.log("withDecipher called within decipher.ts. Type of handler: ", typeof handler)
