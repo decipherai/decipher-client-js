@@ -34,7 +34,7 @@ export function withDecipher(
 
     let responseBody: any;
     try {
-        Decipher.runWithContext({
+        return await Decipher.runWithContext({
           // method: request.method,
           // url: request.url,
           // headers: {},
@@ -43,7 +43,7 @@ export function withDecipher(
         },
         async () => {
           try {
-            console.log("[Decipher] inside Decipher.runWithContext")
+            console.log("[Decipher] [with await] inside Decipher.runWithContext")
             const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
             currentContext?.decipherConsole.instrumentConsole(); // Instrument the console for capturing logs
             currentContext?.decipherConsole.clearMessages(); // Clear any previous messages

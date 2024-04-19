@@ -72,8 +72,9 @@ public updateContext(update: Partial<DecipherContext>): void {
 }
 
 // Add logging to runWithContext to see when a new context is being run
-public runWithContext(context: DecipherContext, fn: () => void): void {
-  asyncLocalStorage.run(context, fn);
+public async runWithContext(context: DecipherContext, fn: () => Promise<Response>): Promise<Response> {
+  const result = await asyncLocalStorage.run(context, fn);
+  return result;  // Returning the Response object obtained from fn
 }
 
 // Add logging to getCurrentContext to see when context is retrieved
