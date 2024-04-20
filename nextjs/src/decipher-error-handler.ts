@@ -33,7 +33,6 @@ export function withDecipher(
     let handlerInvoked = false;
 
     let responseBody: any;
-    try {
         return await Decipher.runWithContext({
           // method: request.method,
           // url: request.url,
@@ -73,6 +72,7 @@ export function withDecipher(
                 messages: currentContext?.consoleMessages || [], 
                 isUncaughtException: false,
                 config: filledConfig,
+                error: currentContext?.capturedError
               });
             }
             console.log('[Decipher] returning the response:', response)
@@ -84,6 +84,7 @@ export function withDecipher(
               // Collect the request/response data and send it to Decipher.
               if (error instanceof Error) {
                 const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
+                const errorToSend = currentContext?.capturedError || error; // Determine the error to send
                 if (currentContext?.decipherConsole) {
                   collectAndSend(decipherRequest, {
                     respBody: responseBody,
@@ -91,7 +92,7 @@ export function withDecipher(
                     messages: currentContext?.consoleMessages || [], 
                     isUncaughtException: true,
                     config: filledConfig,
-                    error,
+                    error: errorToSend
                   });
                 }
                 throw error;
@@ -106,6 +107,7 @@ export function withDecipher(
                     messages: currentContext?.consoleMessages || [], 
                     isUncaughtException: true,
                     config: filledConfig,
+                    error: currentContext?.capturedError
                   });
                 }
               }
@@ -126,10 +128,6 @@ export function withDecipher(
           console.log('[Decipher] returning a new promise')
           return new Response();
         });
-    } catch {
-      console.log('[Decipher] error in the catch block 1')
-      return new Response();
-    }
   };
 }
 
@@ -197,12 +195,14 @@ export function wrapApiHandlerWithDecipher<T>(
       } else {
         // Identified a non-200 (which may be an exception that the handler caught).
         // Collect the request/response data and send it to Decipher.
+        const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
         collectAndSend(req, {
           respBody: responseBody,
           statusCode: res.statusCode,
           messages: decipherConsole.getMessages(),
           isUncaughtException: false,
           config: filledConfig,
+          error: currentContext?.capturedError
         });
         return result;
       }
@@ -210,7 +210,9 @@ export function wrapApiHandlerWithDecipher<T>(
       if (handlerInvoked) {
         // This branch handles uncaught exceptions thrown by the handler; these have stack traces.
         // Collect the request/response data and send it to Decipher.
+        const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
         if (error instanceof Error) {
+          const errorToSend = currentContext?.capturedError || error; // Determine the error to send
           if (decipherConsole) {
             collectAndSend(req, {
               respBody: responseBody,
@@ -218,7 +220,7 @@ export function wrapApiHandlerWithDecipher<T>(
               messages: decipherConsole.getMessages(),
               isUncaughtException: true,
               config: filledConfig,
-              error,
+              error: errorToSend,
             });
           }
         } else {
@@ -231,6 +233,7 @@ export function wrapApiHandlerWithDecipher<T>(
               messages: decipherConsole.getMessages(),
               isUncaughtException: true,
               config: filledConfig,
+              error: currentContext?.capturedError
             });
           }
         }
@@ -258,58 +261,67 @@ export function decipherTrpcMiddleware(config: DecipherHandlerConfig) {
     let originalConsole;
     let decipherConsole;
     let handlerInvoked = false;
-    let result;
+    let result : any;
     const filledConfig = {
       ...config,
       excludeRequestBody: !!config.excludeRequestBody,
       environment: config.environment || "production",
     };
     try {
-      decipherConsole = new DecipherConsole();
-      decipherConsole.instrumentConsole();
-      handlerInvoked = true;
+      return await Decipher.runWithContext({
+        consoleMessages: [],
+        decipherConsole: new DecipherConsole(),
+      }, async () => {
+        try {
+          const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
+          currentContext?.decipherConsole.instrumentConsole(); // Instrument the console for capturing logs
+          currentContext?.decipherConsole.clearMessages(); // Clear any previous messages
 
-      // Proceed with the next middleware or the actual procedure
-      result = await opts.next();
+          // Proceed with the next middleware or the actual procedure
+          result = await opts.next();
 
-      if (!result.ok) {
-        if (result.error instanceof Error) {
-          collectAndSendTrpc(opts, {
-            respBody: {},
-            statusCode: 500,
-            messages: decipherConsole.getMessages(),
-            isUncaughtException: true,
-            config: filledConfig,
-            error: result.error,
-          });
-        } else {
-          collectAndSendTrpc(opts, {
-            respBody: result.error,
-            statusCode: 500,
-            messages: decipherConsole.getMessages(),
-            isUncaughtException: true,
-            config: filledConfig,
-          });
+          if (!result.ok) {
+            if (result.error instanceof Error) {
+              collectAndSendTrpc(opts, {
+                respBody: {},
+                statusCode: 500,
+                messages: currentContext?.consoleMessages || [], 
+                isUncaughtException: true,
+                config: filledConfig,
+                error: result.error,
+              });
+            } else {
+              collectAndSendTrpc(opts, {
+                respBody: result.error,
+                statusCode: 500,
+                messages: currentContext?.consoleMessages || [], 
+                isUncaughtException: true,
+                config: filledConfig,
+              });
+            }
+          }
+          return result;
+        } catch (error) {
+          if (!handlerInvoked) {
+            // Caught an error in Decipher's logic BEFORE handler invocation above. The handler won't throw an error
+            // if it was an invoked given tRPC's error-handling mechanism.
+            return await opts.next();
+          } else {
+            // Caught an error in Decipher's logic AFTER handler invocation above. The handler won't throw an error
+            // if it was an invoked given tRPC's error-handling mechanism.
+            return result;
+          }
+        } finally {
+          const currentContext = Decipher.getCurrentContext();
+          if (currentContext) {
+            currentContext.decipherConsole.resetConsole(); // Reset the console to its original state
+            currentContext.decipherConsole.clearMessages(); // Clear captured console messages
+          }
         }
-      }
-      return result;
-    } catch (error) {
-      if (!handlerInvoked) {
-        // Caught an error in Decipher's logic BEFORE handler invocation above. The handler won't throw an error
-        // if it was an invoked given tRPC's error-handling mechanism.
-        return await opts.next();
-      } else {
-        // Caught an error in Decipher's logic AFTER handler invocation above. The handler won't throw an error
-        // if it was an invoked given tRPC's error-handling mechanism.
-        return result;
-      }
-    } finally {
-      if (originalConsole) {
-        console = originalConsole;
-      }
-      if (decipherConsole) {
-        decipherConsole.clearMessages();
-      }
+      });
+    } catch {
+        console.log('[Decipher] error in the catch block 3')
+        return new Response();
     }
-  };
+  }; 
 }
