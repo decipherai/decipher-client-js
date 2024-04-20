@@ -8,9 +8,9 @@ jest.mock('../utils/decipher-console');
 let mockHandler: jest.MockedFunction<(req: NextRequest) => Promise<NextResponse | any>>;
 describe('withDecipher', () => {
     const mockConfig = {
-      codebase_id: 'test-codebase',
-      customer_id: 'test-customer',
-      exclude_request_body: false,
+      codebaseId: 'test-codebase',
+      customerId: 'test-customer',
+      excludeRequestBody: false,
     };
   
     beforeEach(() => {
