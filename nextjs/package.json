@@ -4,7 +4,7 @@
   "description": "Official Decipher SDK for Nextjs",
   "main": "dist/decipher-error-handler.js",
   "exports": {
-    ".": "./dist/decipher-error-handler.js",
+    ".": "./dist/decipher.js",
     "./express": "./dist/express/decipher-express.js"
   },
   "scripts": {

@@ -21,7 +21,7 @@ async function extractTrpcRequestData(opts: any): Promise<{
 
 interface CollectAndSendData {
   respBody: any;
-  statusCode: number;
+  statusCode?: number;
   messages: any;
   isUncaughtException: boolean;
   config: DecipherHandlerConfig;
@@ -47,7 +47,7 @@ export async function collectAndSend(
       parsedData.headers,
       parsedData.body,
       data.respBody,
-      data.statusCode,
+      data.statusCode || 0,
       data.messages,
       data.isUncaughtException,
       data.config,
@@ -70,7 +70,7 @@ export async function collectAndSendTrpc(opts: any, data: CollectAndSendData) {
       parsedData.headers,
       parsedData.body,
       data.respBody,
-      data.statusCode,
+      data.statusCode || 0,
       data.messages,
       data.isUncaughtException,
       data.config
