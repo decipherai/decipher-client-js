@@ -45,9 +45,7 @@ export async function validateAndUploadSourcemaps(
         body: fileContent,
       });
 
-      if (uploadResponse.ok) {
-        console.log(`Uploaded ${sourcemap} successfully.`);
-      } else {
+      if (!uploadResponse.ok) {
         console.error(`Failed to upload ${sourcemap}.`);
       }
     }
