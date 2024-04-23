@@ -1,74 +1,91 @@
 import * as rrweb from "rrweb";
 import { v4 as uuidv4 } from "uuid";
-import { type eventWithTime, type listenerHandler } from "@rrweb/types";
-
-let buffer: EventBuffer = { data: [], sessionId: "" };
-let flushTimer: ReturnType<typeof setTimeout> | null = null;
+import {
+  type eventWithTime,
+  type listenerHandler,
+  RecordPlugin,
+} from "@rrweb/types";
+import { DecipherFrontendConfig } from "../types/decipher-types";
 
 const BASE_URL = "https://prod.getdecipher.com";
-
 const RECORDING_BUFFER_TIMEOUT = 7000;
 
 interface EventBuffer {
   data: eventWithTime[];
-  sessionId: string;
 }
 
-function startRecording(): listenerHandler | undefined {
-  const sid = uuidv4();
-  buffer = { data: [], sessionId: sid };
+class DecipherRecording {
+  private buffer: EventBuffer = { data: [] };
+  private flushTimer: ReturnType<typeof setTimeout> | null = null;
+  private sessionId: string = "";
+  private customerId: DecipherFrontendConfig["customerId"];
+  private codebaseId: DecipherFrontendConfig["codebaseId"];
+  private plugins: RecordPlugin[];
 
-  const stopRecording =
-    rrweb.record({
-      emit(event) {
-        handleEventBuffering(event);
-      },
-      plugins: [
-        rrweb.getRecordConsolePlugin({
-          level: ["info", "warn", "error"],
-          lengthThreshold: 10000,
-          stringifyOptions: {
-            stringLengthLimit: 1000,
-            numOfKeysLimit: 100,
-            depthOfLimit: 1,
-          },
-          logger: window.console,
-        }),
-      ],
-    }) || undefined;
-
-  return stopRecording;
-}
-
-function flushBuffer() {
-  if (flushTimer) {
-    clearTimeout(flushTimer);
-    flushTimer = null;
-  }
-  if (buffer.data.length > 0) {
-    fetch(`${BASE_URL}/api/store_session`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        events: buffer.data,
-        sessionId: buffer.sessionId,
+  constructor({ customerId, codebaseId }: DecipherFrontendConfig) {
+    this.customerId = customerId;
+    this.codebaseId = codebaseId;
+    this.plugins = [
+      rrweb.getRecordConsolePlugin({
+        // TODO: Consider adding "log" back. Right now we're really only using "error".
+        level: ["info", "warn", "error"],
+        lengthThreshold: 10000,
+        stringifyOptions: {
+          stringLengthLimit: 1000,
+          numOfKeysLimit: 100,
+          depthOfLimit: 1,
+        },
+        logger: window.console,
       }),
-    });
+    ];
+  }
+  public startRecording(): listenerHandler | undefined {
+    this.sessionId = uuidv4();
+    this.buffer = { data: [] };
 
-    buffer = { data: [], sessionId: buffer.sessionId };
+    const stopRecording =
+      rrweb.record({
+        emit: (event) => {
+          this.handleEventBuffering(event);
+        },
+        plugins: this.plugins,
+      }) || undefined;
+
+    return stopRecording;
+  }
+
+  private flushBuffer() {
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
+    if (this.buffer.data.length > 0) {
+      fetch(`${BASE_URL}/api/store_session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          events: this.buffer.data,
+          sessionId: this.sessionId,
+          customerId: this.customerId,
+          codebaseId: this.codebaseId,
+        }),
+      });
+
+      this.buffer = { data: [] };
+    }
+  }
+
+  private handleEventBuffering(event: any) {
+    this.buffer.data.push(event);
+
+    if (!this.flushTimer) {
+      this.flushTimer = setTimeout(() => {
+        this.flushBuffer();
+      }, RECORDING_BUFFER_TIMEOUT);
+    }
   }
 }
 
-function handleEventBuffering(event: any) {
-  buffer.data.push(event);
-
-  if (!flushTimer) {
-    flushTimer = setTimeout(() => {
-      flushBuffer();
-    }, RECORDING_BUFFER_TIMEOUT);
-  }
-}
-
-export { startRecording };
+export { DecipherRecording };
