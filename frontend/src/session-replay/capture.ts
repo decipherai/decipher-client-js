@@ -6,11 +6,32 @@ import {
   RecordPlugin,
 } from "@rrweb/types";
 import { DecipherFrontendConfig } from "../types/decipher-types";
-const BASE_URL = "https://prod.getdecipher.com";
+
+const BASE_URL = "http://localhost:3000";
 const RECORDING_BUFFER_TIMEOUT = 7000;
+
+const win: (Window & typeof globalThis) | undefined =
+  typeof window !== "undefined" ? window : undefined;
 
 interface EventBuffer {
   data: eventWithTime[];
+}
+
+interface ErrorEvent {
+  message?: string | Event;
+  source?: string;
+  lineno?: number;
+  colno?: number;
+  error?: Error;
+}
+
+interface ErrorProperties {
+  $exception_type: string;
+  $exception_message: string;
+  $exception_source?: string;
+  $exception_lineno?: number;
+  $exception_colno?: number;
+  $exception_stack_trace_raw?: string;
 }
 
 class DecipherRecording {
@@ -26,7 +47,6 @@ class DecipherRecording {
     this.codebaseId = codebaseId;
     this.plugins = [
       rrweb.getRecordConsolePlugin({
-        // TODO: Consider adding "log" back. Right now we're really only using "error".
         level: ["info", "warn", "error"],
         lengthThreshold: 10000,
         stringifyOptions: {
@@ -34,14 +54,14 @@ class DecipherRecording {
           numOfKeysLimit: 100,
           depthOfLimit: 1,
         },
-        logger: window.console,
+        logger: win?.console || window.console,
       }),
     ];
   }
+
   public startRecording(): listenerHandler | undefined {
     this.sessionId = uuidv4();
     this.buffer = { data: [] };
-
     const stopRecording =
       rrweb.record({
         emit: (event) => {
@@ -50,7 +70,40 @@ class DecipherRecording {
         plugins: this.plugins,
       }) || undefined;
 
+    this.setupErrorHandlers();
+
     return stopRecording;
+  }
+
+  private setupErrorHandlers() {
+    if (!win) {
+      return;
+    }
+    const originalOnError = win.onerror;
+    const originalOnUnhandledRejection = win.onunhandledrejection;
+
+    win.onerror = (message, source, lineno, colno, error) => {
+      this.captureException({ error });
+      if (originalOnError) {
+        return originalOnError(message, source, lineno, colno, error);
+      }
+      return false;
+    };
+    // TODO: Start handling unhandled rejections. Need to make sure captureException works properly for this.
+    // win.onunhandledrejection = (event) => {
+    //   console.log("IN win onunhandledrejection");
+    //   this.captureException({ message: event.reason });
+    //   if (originalOnUnhandledRejection) {
+    //     return originalOnUnhandledRejection.call(win, event);
+    //   }
+    //   return true;
+    // };
+  }
+
+  public captureException({ error }: ErrorEvent) {
+    rrweb.record.addCustomEvent("uncaught-error", {
+      error,
+    });
   }
 
   private flushBuffer() {
@@ -72,11 +125,11 @@ class DecipherRecording {
         }),
       });
 
-      this.buffer = { data: [] };
+      this.buffer.data = [];
     }
   }
 
-  private handleEventBuffering(event: any) {
+  private handleEventBuffering(event: eventWithTime) {
     this.buffer.data.push(event);
 
     if (!this.flushTimer) {

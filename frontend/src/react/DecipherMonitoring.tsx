@@ -10,8 +10,16 @@ const WithDecipher: React.FC<DecipherFrontendConfig> = ({ customerId, codebaseId
         }
         const decipherRecording = new DecipherRecording({ customerId, codebaseId });
         const stopRecording = decipherRecording.startRecording();
-        return () => { // Stop recording on unmount.
+
+        // Set up exception capturing
+        const originalOnError = window.onerror;
+        const originalOnUnhandledRejection = window.onunhandledrejection;
+
+        return () => { // Stop recording and error capturing on unmount.
             stopRecording?.();
+
+            window.onerror = originalOnError;
+            window.onunhandledrejection = originalOnUnhandledRejection;
         };
     }, [customerId, codebaseId]);
 
