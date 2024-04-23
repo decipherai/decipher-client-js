@@ -37,7 +37,6 @@ class Decipher {
     if (!Decipher.instance) {
       Decipher.instance = new Decipher();
     }
-    console.log("Decipher instance accessed:", Decipher.instance);
     return Decipher.instance;
   }
 
@@ -55,7 +54,7 @@ public captureError(error: Error): void {
   if (context) {
     context.capturedError = error;
   }
-  
+
   try {
     handleCaptureError();
   } catch (e) {
