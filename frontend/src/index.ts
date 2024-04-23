@@ -1,1 +1,1 @@
-export { default as DecipherCaptureComponent } from "./react/DecipherMonitoring";
+export { default as WithDecipher } from "./react/DecipherMonitoring";
