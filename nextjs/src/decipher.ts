@@ -33,6 +33,7 @@ class Decipher {
     if (!Decipher.instance) {
       Decipher.instance = new Decipher();
     }
+    console.log("Decipher instance accessed:", Decipher.instance);
     return Decipher.instance;
   }
 
@@ -42,6 +43,8 @@ public init(config: DecipherHandlerConfig): void {
     ...this.settings,
     ...config
   };
+  console.log("Decipher initializing with instance: ", this);
+  console.log("[Decipher] Decipher initialized with config: ", this.settings);
 }
 
 // Add logging to captureError to see when errors are captured
@@ -83,7 +86,12 @@ public getCurrentContext(): DecipherContext | undefined {
   return context;
 }
 
-public withDecipher = withDecipher;
+// public withDecipher = withDecipher;
+
+public withDecipher(handler: any): typeof handler {
+  let response = withDecipher(handler, this.settings);
+  return response;
+}
 
 public wrapApiHandlerWithDecipher = wrapApiHandlerWithDecipher;
 

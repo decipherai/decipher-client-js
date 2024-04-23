@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { collectAndSend } from '../utils/collect-and-send';
 import Decipher from '../decipher';
 
-
 jest.mock('../utils/collect-and-send', () => ({
     collectAndSend: jest.fn(),
   }));
-  
+
 // jest.mock('../utils/collect-and-send');
 jest.mock('../utils/decipher-console');
 
@@ -38,7 +37,7 @@ describe('withDecipher', () => {
         return response;
       });
   
-      const wrappedHandler = Decipher.withDecipher(mockHandler, mockConfig);
+      const wrappedHandler = Decipher.withDecipher(mockHandler);
       const result = await wrappedHandler(request);
   
       expect(result).toBe(response);
@@ -54,7 +53,7 @@ describe('withDecipher', () => {
         throw error;
       });
   
-      const wrappedHandler = Decipher.withDecipher(mockHandler, mockConfig);
+      const wrappedHandler = Decipher.withDecipher(mockHandler);
   
       await expect(wrappedHandler(request)).rejects.toThrow(error);
       expect(collectAndSend).toHaveBeenCalled();

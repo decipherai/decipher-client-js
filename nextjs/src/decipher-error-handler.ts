@@ -24,7 +24,7 @@ export function withDecipher(
   config: DecipherHandlerConfig
 ): typeof handler {
   const filledConfig = {
-    ...config,
+    ...Decipher.settings,
     excludeRequestBody: !!config.excludeRequestBody,
     environment: config.environment || "production",
   };
