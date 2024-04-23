@@ -3,17 +3,21 @@ import { DecipherConsole } from "./utils/decipher-console";
 const { AsyncLocalStorage } = require('node:async_hooks');
 import type { DecipherHandlerConfig } from './utils/handler-config';
 import { withDecipher, wrapApiHandlerWithDecipher } from './decipher-error-handler';
+import { handleCaptureError } from './decipher-error-handler';
+
+import type { NextApiRequest } from "next";
 
 // Creating an instance of AsyncLocalStorage to store context specific to each request
 const asyncLocalStorage = new AsyncLocalStorage();
 // Defining the structure of the context stored in AsyncLocalStorage
+
 interface DecipherContext {
-  // method: string;
-  // url: string;
-  // headers: NodeJS.Dict<string | string[]>;
-  decipherConsole: DecipherConsole;
+  opts?: any;
+  request?: NextApiRequest | Request,
+  decipherConsole: DecipherConsole,
   capturedError?: Error;
   consoleMessages: any[];
+  config: DecipherHandlerConfig;
 }
 
 // Singleton class to manage Decipher configurations and context
@@ -43,15 +47,19 @@ public init(config: DecipherHandlerConfig): void {
     ...this.settings,
     ...config
   };
-  console.log("Decipher initializing with instance: ", this);
-  console.log("[Decipher] Decipher initialized with config: ", this.settings);
 }
 
 // Add logging to captureError to see when errors are captured
 public captureError(error: Error): void {
-  const store = asyncLocalStorage.getStore();
-  if (store) {
-    store.capturedError = error;
+  let context = this.getCurrentContext();
+  if (context) {
+    context.capturedError = error;
+  }
+  
+  try {
+    handleCaptureError();
+  } catch (e) {
+    
   }
 }
 
@@ -86,22 +94,12 @@ public getCurrentContext(): DecipherContext | undefined {
   return context;
 }
 
-// public withDecipher = withDecipher;
-
 public withDecipher(handler: any): typeof handler {
   let response = withDecipher(handler, this.settings);
   return response;
 }
 
 public wrapApiHandlerWithDecipher = wrapApiHandlerWithDecipher;
-
-// public withDecipher(handler: any, config: DecipherHandlerConfig): typeof handler {
-//   console.log("withDecipher called within decipher.ts. Type of handler: ", typeof handler)
-//   console.log("Config: ", config);
-//   let response = withDecipher(handler, config);
-//   console.log("Response within decipher.ts: ", response);
-//   return response;
-// }
 
 }
 
