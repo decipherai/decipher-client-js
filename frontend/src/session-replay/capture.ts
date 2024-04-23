@@ -6,7 +6,6 @@ import {
   RecordPlugin,
 } from "@rrweb/types";
 import { DecipherFrontendConfig } from "../types/decipher-types";
-
 const BASE_URL = "https://prod.getdecipher.com";
 const RECORDING_BUFFER_TIMEOUT = 7000;
 
