@@ -80,16 +80,17 @@ class DecipherRecording {
       return;
     }
     const originalOnError = win.onerror;
-    const originalOnUnhandledRejection = win.onunhandledrejection;
 
     win.onerror = (message, source, lineno, colno, error) => {
-      this.captureException({ error });
+      this.captureException({ message, source, lineno, colno, error });
       if (originalOnError) {
         return originalOnError(message, source, lineno, colno, error);
       }
       return false;
     };
-    // TODO: Start handling unhandled rejections. Need to make sure captureException works properly for this.
+
+    // TODO: Start handling onunhandled rejections
+    // const originalOnUnhandledRejection = win.onunhandledrejection;
     // win.onunhandledrejection = (event) => {
     //   console.log("IN win onunhandledrejection");
     //   this.captureException({ message: event.reason });
@@ -100,9 +101,16 @@ class DecipherRecording {
     // };
   }
 
-  public captureException({ error }: ErrorEvent) {
+  public captureException({
+    message,
+    source,
+    lineno,
+    colno,
+    error,
+  }: ErrorEvent) {
     rrweb.record.addCustomEvent("uncaught-error", {
-      error,
+        message,
+        stackTraceString:  JSON.stringify(error?.stack || ""),
     });
   }
 
