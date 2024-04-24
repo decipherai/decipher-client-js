@@ -1,3 +1,4 @@
+"use client";
 import React, { useEffect } from 'react';
 import { DecipherRecording } from '../session-replay/capture';
 import { DecipherFrontendConfig } from '../types/decipher-types';
