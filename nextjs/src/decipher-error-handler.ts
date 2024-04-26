@@ -33,93 +33,95 @@ export function withDecipher(
     let handlerInvoked = false;
 
     let responseBody: any;
-        return await Decipher.runWithContext({
-          request: request,
-          consoleMessages: [],
-          decipherConsole: new DecipherConsole(),
-          config: filledConfig,
-        },
-        async () => {
-          try {
-            const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-            currentContext?.decipherConsole.instrumentConsole(); // Instrument the console for capturing logs
-            currentContext?.decipherConsole.clearMessages(); // Clear any previous messages
+    return await Decipher.runWithContext(
+      {
+        request: request,
+        consoleMessages: [],
+        decipherConsole: new DecipherConsole(),
+        config: filledConfig,
+      },
+      async () => {
+        try {
+          const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
+          currentContext?.decipherConsole.instrumentConsole(); // Instrument the console for capturing logs
+          currentContext?.decipherConsole.clearMessages(); // Clear any previous messages
 
-            handlerInvoked = true;
-            if (!filledConfig.excludeRequestBody) {
-              // Clone the request if we're capturing body, so that we can
-              // access the body stream without affecting the original request's stream.
-              decipherRequest = request.clone();
-              Decipher.updateContext({ request: decipherRequest });
-            }
-            const response = await handler(request as any); // Run the handler as normal.
-            if (!response.ok) {
-              const clonedResponse = response.clone();
-              try {
-                responseBody = await clonedResponse.json();
-              } catch (jsonParseError) {
-                responseBody = "Unknown error; json parsing failed.";
-              }
-              // Identified a non-2xx response, which may be an exception that the handler caught.
-              // Collect the request/response data and send it to Decipher.
-              collectAndSend(decipherRequest, {
-                respBody: responseBody,
-                statusCode: response.status,
-                messages: currentContext?.consoleMessages || [], 
-                isUncaughtException: false,
-                config: filledConfig,
-                error: currentContext?.capturedError
-              });
-            }
-            return response;
-          } catch (error) {
-            if (handlerInvoked) {
-              // This branch handles uncaught exceptions thrown by the handler; these have stack traces.
-              // Collect the request/response data and send it to Decipher.
-              if (error instanceof Error) {
-                const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-                const errorToSend = currentContext?.capturedError || error; // Determine the error to send
-                if (currentContext?.decipherConsole) {
-                  collectAndSend(decipherRequest, {
-                    respBody: responseBody,
-                    statusCode: 500,
-                    messages: currentContext?.consoleMessages || [], 
-                    isUncaughtException: true,
-                    config: filledConfig,
-                    error: errorToSend
-                  });
-                }
-                throw error;
-              } else {
-                // This else condition is needed because it's possible to throw non-Error objects
-                // e.g. `throw "error happened"` (string)
-                const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-                if (currentContext?.decipherConsole) {
-                  collectAndSend(decipherRequest, {
-                    respBody: error,
-                    statusCode: 500,
-                    messages: currentContext?.consoleMessages || [], 
-                    isUncaughtException: true,
-                    config: filledConfig,
-                    error: currentContext?.capturedError
-                  });
-                }
-              }
-            } else {
-              // Something went wrong with Decipher's initialization logic; just run the handler as normal and
-              // return the result.
-              const result = await handler(request as any);
-              return result;
-            }
-          } finally {
-            const currentContext = Decipher.getCurrentContext();
-            if (currentContext) {
-              currentContext.decipherConsole.resetConsole(); // Reset the console to its original state
-              currentContext.decipherConsole.clearMessages(); // Clear captured console messages
-            }
+          handlerInvoked = true;
+          if (!filledConfig.excludeRequestBody) {
+            // Clone the request if we're capturing body, so that we can
+            // access the body stream without affecting the original request's stream.
+            decipherRequest = request.clone();
+            Decipher.updateContext({ request: decipherRequest });
           }
-          return new Response();
-        });
+          const response = await handler(request as any); // Run the handler as normal.
+          if (!response.ok) {
+            const clonedResponse = response.clone();
+            try {
+              responseBody = await clonedResponse.json();
+            } catch (jsonParseError) {
+              responseBody = "Unknown error; json parsing failed.";
+            }
+            // Identified a non-2xx response, which may be an exception that the handler caught.
+            // Collect the request/response data and send it to Decipher.
+            collectAndSend(decipherRequest, {
+              respBody: responseBody,
+              statusCode: response.status,
+              messages: currentContext?.consoleMessages || [],
+              isUncaughtException: false,
+              config: filledConfig,
+              error: currentContext?.capturedError,
+            });
+          }
+          return response;
+        } catch (error) {
+          if (handlerInvoked) {
+            // This branch handles uncaught exceptions thrown by the handler; these have stack traces.
+            // Collect the request/response data and send it to Decipher.
+            if (error instanceof Error) {
+              const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
+              const errorToSend = currentContext?.capturedError || error; // Determine the error to send
+              if (currentContext?.decipherConsole) {
+                collectAndSend(decipherRequest, {
+                  respBody: responseBody,
+                  statusCode: 500,
+                  messages: currentContext?.consoleMessages || [],
+                  isUncaughtException: true,
+                  config: filledConfig,
+                  error: errorToSend,
+                });
+              }
+              throw error;
+            } else {
+              // This else condition is needed because it's possible to throw non-Error objects
+              // e.g. `throw "error happened"` (string)
+              const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
+              if (currentContext?.decipherConsole) {
+                collectAndSend(decipherRequest, {
+                  respBody: error,
+                  statusCode: 500,
+                  messages: currentContext?.consoleMessages || [],
+                  isUncaughtException: true,
+                  config: filledConfig,
+                  error: currentContext?.capturedError,
+                });
+              }
+            }
+          } else {
+            // Something went wrong with Decipher's initialization logic; just run the handler as normal and
+            // return the result.
+            const result = await handler(request as any);
+            return result;
+          }
+        } finally {
+          const currentContext = Decipher.getCurrentContext();
+          if (currentContext) {
+            currentContext.decipherConsole.resetConsole(); // Reset the console to its original state
+            currentContext.decipherConsole.clearMessages(); // Clear captured console messages
+          }
+        }
+        return new Response();
+      }
+    );
   };
 }
 
@@ -182,7 +184,6 @@ export function wrapApiHandlerWithDecipher<T>(
       handlerInvoked = true;
       const result = await handler(req, res); // Run the handler as normal.
       return result;
-
     } catch (error) {
       if (handlerInvoked) {
         // This branch handles uncaught exceptions thrown by the handler; these have stack traces.
@@ -210,7 +211,7 @@ export function wrapApiHandlerWithDecipher<T>(
               messages: decipherConsole.getMessages(),
               isUncaughtException: true,
               config: filledConfig,
-              error: currentContext?.capturedError
+              error: currentContext?.capturedError,
             });
           }
         }
@@ -235,63 +236,64 @@ export function wrapApiHandlerWithDecipher<T>(
 
 export function decipherTrpcMiddleware(config: DecipherHandlerConfig) {
   return async (opts: any) => {
-    let originalConsole;
-    let decipherConsole;
     let handlerInvoked = false;
-    let result : any;
+    let result: any;
     const filledConfig = {
       ...config,
       excludeRequestBody: !!config.excludeRequestBody,
       environment: config.environment || "production",
     };
     try {
-      return await Decipher.runWithContext({
-        opts: opts,
-        consoleMessages: [],
-        decipherConsole: new DecipherConsole(),
-        config: filledConfig,
-      }, async () => {
-        try {
-          const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-          currentContext?.decipherConsole.instrumentConsole(); // Instrument the console for capturing logs
-          currentContext?.decipherConsole.clearMessages(); // Clear any previous messages
+      return await Decipher.runWithContext(
+        {
+          opts: opts,
+          consoleMessages: [],
+          decipherConsole: new DecipherConsole(),
+          config: filledConfig,
+        },
+        async () => {
+          try {
+            const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
+            currentContext?.decipherConsole.instrumentConsole(); // Instrument the console for capturing logs
+            currentContext?.decipherConsole.clearMessages(); // Clear any previous messages
 
-          // Proceed with the next middleware or the actual procedure
-          result = await opts.next();
+            // Proceed with the next middleware or the actual procedure
+            result = await opts.next();
 
-          if (!result.ok && result.error instanceof Error) {
-            collectAndSendTrpc(opts, {
-              respBody: {},
-              statusCode: 500,
-              messages: currentContext?.consoleMessages || [], 
-              isUncaughtException: true,
-              config: filledConfig,
-              error: result.error,
-            });
-          }
-          return result;
-        } catch (error) {
-          if (!handlerInvoked) {
-            // Caught an error in Decipher's logic BEFORE handler invocation above. The handler won't throw an error
-            // if it was an invoked given tRPC's error-handling mechanism.
-            return await opts.next();
-          } else {
-            // Caught an error in Decipher's logic AFTER handler invocation above. The handler won't throw an error
-            // if it was an invoked given tRPC's error-handling mechanism.
+            if (!result.ok && result.error instanceof Error) {
+              collectAndSendTrpc(opts, {
+                respBody: {},
+                statusCode: 500,
+                messages: currentContext?.consoleMessages || [],
+                isUncaughtException: true,
+                config: filledConfig,
+                error: result.error,
+              });
+            }
             return result;
-          }
-        } finally {
-          const currentContext = Decipher.getCurrentContext();
-          if (currentContext) {
-            currentContext.decipherConsole.resetConsole(); // Reset the console to its original state
-            currentContext.decipherConsole.clearMessages(); // Clear captured console messages
+          } catch (error) {
+            if (!handlerInvoked) {
+              // Caught an error in Decipher's logic BEFORE handler invocation above. The handler won't throw an error
+              // if it was an invoked given tRPC's error-handling mechanism.
+              return await opts.next();
+            } else {
+              // Caught an error in Decipher's logic AFTER handler invocation above. The handler won't throw an error
+              // if it was an invoked given tRPC's error-handling mechanism.
+              return result;
+            }
+          } finally {
+            const currentContext = Decipher.getCurrentContext();
+            if (currentContext) {
+              currentContext.decipherConsole.resetConsole(); // Reset the console to its original state
+              currentContext.decipherConsole.clearMessages(); // Clear captured console messages
+            }
           }
         }
-      });
+      );
     } catch {
-        return new Response();
+      return new Response();
     }
-  }; 
+  };
 }
 
 export function handleCaptureError() {
@@ -300,7 +302,7 @@ export function handleCaptureError() {
   if (currentContext?.opts) {
     collectAndSendTrpc(currentContext?.opts, {
       respBody: {},
-      messages: currentContext?.consoleMessages || [], 
+      messages: currentContext?.consoleMessages || [],
       isUncaughtException: false,
       config: currentContext?.config,
       error: currentContext?.capturedError,
@@ -311,11 +313,10 @@ export function handleCaptureError() {
   else if (currentContext?.capturedError && currentContext.request) {
     collectAndSend(currentContext.request, {
       respBody: {},
-      messages: currentContext.consoleMessages || [], 
+      messages: currentContext.consoleMessages || [],
       isUncaughtException: false,
       config: currentContext.config,
       error: currentContext.capturedError,
     });
   }
 }
-

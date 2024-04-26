@@ -1,4 +1,4 @@
-import Decipher from '../utils/decipher'; // Importing the Decipher singleton from @decipher.ts
+import Decipher from "../utils/decipher"; // Importing the Decipher singleton from @decipher.ts
 import { ConsoleMethods } from "../types";
 
 export class DecipherConsole {
@@ -18,7 +18,7 @@ export class DecipherConsole {
 
   public resetConsole() {
     // Reset each console method to its original implementation
-    Object.keys(this.originalConsoleMethods).forEach(methodKey => {
+    Object.keys(this.originalConsoleMethods).forEach((methodKey) => {
       const method = this.originalConsoleMethods[methodKey];
       if (method) {
         (console as any)[methodKey] = method;
@@ -42,12 +42,15 @@ export class DecipherConsole {
         );
         const message = messageParts.join(" ");
         Decipher.updateContext({
-          consoleMessages: [...currentContext.consoleMessages, { message, level, timestamp }]
+          consoleMessages: [
+            ...currentContext.consoleMessages,
+            { message, level, timestamp },
+          ],
         });
         this.originalConsoleMethods[level]?.apply(console, args);
       }
     } finally {
-      Decipher.setProcessingLogState(false);    
+      Decipher.setProcessingLogState(false);
     }
   }
 
@@ -84,8 +87,7 @@ export class DecipherConsole {
 }
 
 function safeStringify(obj: unknown, indent = 2): string {
-
-  try { 
+  try {
     if (typeof obj !== "object" || obj === null) {
       return String(obj);
     }
@@ -93,7 +95,7 @@ function safeStringify(obj: unknown, indent = 2): string {
     let cache: any[] | null = [];
     const retVal = JSON.stringify(
       obj,
-      (key, value) =>
+      (_key, value) =>
         typeof value === "object" && value !== null
           ? cache!.includes(value)
             ? undefined // Duplicate reference found, discard key
@@ -101,9 +103,9 @@ function safeStringify(obj: unknown, indent = 2): string {
           : value,
       indent
     );
-      cache = null;
-      return retVal;
+    cache = null;
+    return retVal;
   } catch (e) {
-    return 'Error in stringification: ' + e;
+    return "Error in stringification: " + e;
   }
 }
