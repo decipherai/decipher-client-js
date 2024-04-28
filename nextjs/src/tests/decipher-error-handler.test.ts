@@ -80,8 +80,7 @@ describe("Next.js API route behavior", () => {
     it("should capture errors with a stack trace using Decipher.captureError", async () => {
       const request = new NextRequest("http://test.com/trigger-error");
       const error = new Error("Simulated error");
-
-      mockHandler.mockImplementation(async (req) => {
+      mockHandler.mockImplementation(async (_req) => {
         try {
           throw error;
         } catch (error) {
@@ -158,7 +157,7 @@ describe("Next.js API route behavior", () => {
       // Mock the tRPC handler behavior to simulate an uncaught exception
       mockTrpcHandler = jest
         .fn()
-        .mockImplementation(async (req: NextRequest) => {
+        .mockImplementation(async (_req: NextRequest) => {
           // Directly throwing an error to simulate an uncaught exception scenario
           throw new Error("Uncaught tRPC error");
         });
@@ -194,7 +193,7 @@ describe("Next.js API route behavior", () => {
       const request = new NextRequest("http://test.com/trigger-error");
       const error = new Error("Simulated error");
 
-      mockHandler.mockImplementation(async (req) => {
+      mockHandler.mockImplementation(async (_req) => {
         try {
           Decipher.setUser({ email: "test@test.com" });
           throw error;

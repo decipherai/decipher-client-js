@@ -239,8 +239,6 @@ export function wrapApiHandlerWithDecipher<T>(
 
 export function decipherTrpcMiddleware(config: DecipherHandlerConfig) {
   return async (opts: any) => {
-    let originalConsole;
-    let decipherConsole;
     let handlerInvoked = false;
     let result: any;
     const filledConfig = {
