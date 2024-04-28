@@ -3,6 +3,12 @@ import axios from "axios";
 import type { NextApiRequest } from "next";
 import { DecipherHandlerConfig } from "./handler-config";
 
+export type User = {
+  id?: number | string;
+  username?: string;
+  email?: string;
+};
+
 async function extractTrpcRequestData(opts: any): Promise<{
   url: string;
   endpoint: string;
@@ -26,6 +32,7 @@ interface CollectAndSendData {
   isUncaughtException: boolean;
   config: DecipherHandlerConfig;
   error?: Error;
+  endUser?: User | null;
 }
 
 export async function collectAndSend(
@@ -51,6 +58,7 @@ export async function collectAndSend(
       data.messages,
       data.isUncaughtException,
       data.config,
+      data.endUser
     );
   } catch (error) {
     console.error("Failure sending to Decipher", error);
@@ -73,7 +81,8 @@ export async function collectAndSendTrpc(opts: any, data: CollectAndSendData) {
       data.statusCode || 0,
       data.messages,
       data.isUncaughtException,
-      data.config
+      data.config,
+      data.endUser
     );
   } catch (error) {
     console.error("Failure sending to Decipher for Trpc", error);
@@ -151,8 +160,8 @@ const sendErrorToService = async (
   messages: any,
   isUncaughtException: boolean,
   config: DecipherHandlerConfig,
+  endUser?: User | null
 ) => {
-  
   const payload = {
     codebase_id: config.codebaseId,
     timestamp: timestamp,
@@ -167,6 +176,7 @@ const sendErrorToService = async (
     is_uncaught_exception: isUncaughtException,
     messages,
     environment: config.environment,
+    affected_user: endUser || null,
   };
   try {
     axios
