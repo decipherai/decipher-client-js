@@ -89,6 +89,7 @@ export function withDecipher(
                   isUncaughtException: true,
                   config: filledConfig,
                   error: errorToSend,
+                  endUser: currentContext?.endUser,
                 });
               }
               throw error;

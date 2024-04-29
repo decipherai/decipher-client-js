@@ -11,6 +11,7 @@ export interface DecipherContext {
   decipherConsole: DecipherConsole;
   capturedError?: Error;
   consoleMessages: any[];
+  endUser?: User | null;
 }
 
 export interface ConsoleMethods {
@@ -28,3 +29,9 @@ export interface DecipherHandlerConfig {
   excludeRequestBody?: boolean;
   environment?: string;
 }
+
+export type User = {
+  id?: number | string;
+  username?: string;
+  email?: string;
+};

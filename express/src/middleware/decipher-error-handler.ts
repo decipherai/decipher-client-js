@@ -78,7 +78,6 @@ export const errorHandler = (
 
     const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
     const errorToSend = currentContext?.capturedError || err; // Determine the error to send
-
     // Collect and send error information
     collectAndSend(
       req,
@@ -89,7 +88,8 @@ export const errorHandler = (
       Decipher.settings.codebaseId ?? "",
       Decipher.settings.customerId ?? "",
       !!Decipher.settings.excludeRequestBody,
-      errorToSend
+      errorToSend,
+      currentContext?.endUser || undefined
     );
   } catch (error) {
   } finally {
@@ -105,6 +105,7 @@ function handleNon200Response(
   statusCode: number,
   context?: DecipherContext
 ) {
+
   // Check if Decipher has been initialized properly
   if (!Decipher.settings) {
     console.error("Decipher has not been initialized.");
@@ -112,7 +113,6 @@ function handleNon200Response(
   }
 
   const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-
   // Collect and send response information for non-200 responses
   collectAndSend(
     req,
@@ -123,6 +123,7 @@ function handleNon200Response(
     Decipher.settings.codebaseId ?? "",
     Decipher.settings.customerId ?? "",
     !!Decipher.settings.excludeRequestBody,
-    context?.capturedError
+    context?.capturedError,
+    context?.endUser || undefined
   );
 }

@@ -1,6 +1,8 @@
 import axios from "axios";
 
 import type { Request as ExpressRequest } from "express";
+import { User } from "../types";
+
 
 export async function collectAndSend(
   req: Request | ExpressRequest,
@@ -11,11 +13,10 @@ export async function collectAndSend(
   codebaseId: string,
   customerId: string,
   excludeRequestBody: boolean,
-  error?: Error
+  error?: Error,
+  endUser?: User
 ): Promise<void> {
   try {
-    console.log("Kicking off collect and send")
-    console.log(error)
     const errorTimestamp = new Date().toISOString();
     const parsedData = await extractRequestData(req, excludeRequestBody);
     // Non-200s get logged; uncaught exceptions are caught below (in the `catch` block)
@@ -31,7 +32,8 @@ export async function collectAndSend(
       messages,
       isUncaughtException,
       codebaseId,
-      customerId
+      customerId,
+      endUser
     );
   } catch (error) {
     console.error("Failure sending to Decipher", error);
@@ -112,7 +114,8 @@ const sendErrorToService = async (
   messages: any,
   isUncaughtException: boolean,
   codebaseId: string,
-  customerId: string
+  customerId: string,
+  endUser?: User | null,
 ) => {
   const payload = {
     codebase_id: codebaseId,
@@ -127,6 +130,7 @@ const sendErrorToService = async (
     status_code: statusCode,
     is_uncaught_exception: isUncaughtException,
     messages: messages,
+    affected_user: endUser || null,
   };
   try {
     axios

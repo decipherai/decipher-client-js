@@ -1,6 +1,9 @@
-import DecipherObj from './utils/decipher';
-import { requestHandler, errorHandler } from './middleware/decipher-error-handler';
-import type { DecipherHandlerConfig } from './types';
+import DecipherObj from "./utils/decipher";
+import {
+  requestHandler,
+  errorHandler,
+} from "./middleware/decipher-error-handler";
+import type { DecipherHandlerConfig, User } from "./types";
 
 const Decipher = {
   init: (config: DecipherHandlerConfig) => {
@@ -12,6 +15,9 @@ const Decipher = {
   },
   captureError: (error: Error) => {
     DecipherObj.captureError(error);
+  },
+  setUser: (user: User) => {
+    DecipherObj.setUser(user);
   },
 };
 
