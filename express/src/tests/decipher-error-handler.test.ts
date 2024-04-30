@@ -15,6 +15,8 @@ describe("Express application behavior", () => {
   let app: express.Application;
 
   beforeAll(() => {
+    mockedCollectAndSend.mockReset();
+
     app = express();
     Decipher.init({ codebaseId: "test-codebase", customerId: "test-customer" });
 
@@ -43,6 +45,8 @@ describe("Express application behavior with error", () => {
   let app: express.Application;
 
   beforeAll(() => {
+    mockedCollectAndSend.mockReset();
+
     app = express();
 
     Decipher.init({ codebaseId: "test-codebase", customerId: "test-customer" });
@@ -84,15 +88,20 @@ describe("Decipher.captureError functionality", () => {
   let app: express.Application;
 
   beforeAll(() => {
+    mockedCollectAndSend.mockReset();
+
     app = express();
+
     Decipher.init({ codebaseId: "test-codebase", customerId: "test-customer" });
+    
+    app.use(Decipher.Handlers.requestHandler());
 
     app.get("/trigger-error", async (_req, res) => {
       try {
         throw new Error("Simulated error");
       } catch (error) {
         Decipher.captureError(error);
-        res.status(500).send("Error was captured");
+        res.status(500).send("Error was captured 2");
       }
     });
 
