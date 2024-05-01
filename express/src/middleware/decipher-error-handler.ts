@@ -18,7 +18,7 @@ export function requestHandler() {
     try {
       // Check if Decipher has been initialized properly
       if (!Decipher.settings) {
-        console.error("Decipher has not been initialized.");
+        //console.error("Decipher has not been initialized.");
         return next();
       }
       // Initialize context for the current request using Decipher.runWithContext
@@ -72,7 +72,7 @@ export const errorHandler = (
   try {
     // Check if Decipher has been initialized properly
     if (!Decipher.settings) {
-      console.error("Decipher has not been initialized.");
+      //console.error("Decipher has not been initialized.");
       return next();
     }
 
@@ -108,7 +108,7 @@ function handleNon200Response(
 
   // Check if Decipher has been initialized properly
   if (!Decipher.settings) {
-    console.error("Decipher has not been initialized.");
+    //console.error("Decipher has not been initialized.");
     return;
   }
 

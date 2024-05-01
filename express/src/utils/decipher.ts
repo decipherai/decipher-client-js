@@ -58,7 +58,7 @@ class Decipher {
     if (store) {
       Object.assign(store, update);
     } else {
-      console.log("[Decipher] No active async local storage to update");
+      //console.log("[Decipher] No active async local storage to update");
     }
   }
 
