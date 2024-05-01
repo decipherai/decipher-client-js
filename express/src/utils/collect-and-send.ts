@@ -145,7 +145,7 @@ const sendErrorToService = async (
           },
         }
       )
-      .catch((err) => {
+      .catch(() => {
         //console.error("Axios error sending issue to Decipher backend", err)
       });
   } catch (err) {
