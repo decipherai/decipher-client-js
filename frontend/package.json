@@ -1,9 +1,8 @@
 {
   "name": "@decipher-sdk/frontend",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "The official Decipher SDK for your frontend.",
   "main": "dist/index.js",
-  "type": "module",
   "exports": {
     ".": "./dist/index.js"
   },
