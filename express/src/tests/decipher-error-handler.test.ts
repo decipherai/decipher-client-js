@@ -1,165 +1,186 @@
-const Decipher = require("../index");
-import { collectAndSend } from "../utils/collect-and-send";
-import request from "supertest";
-import express from "express";
+const Decipher = require('../index')
+import { collectAndSend } from '../utils/collect-and-send'
+import request from 'supertest'
+import express from 'express'
 
-jest.mock("../utils/collect-and-send", () => ({
-  collectAndSend: jest.fn(),
-}));
+jest.mock('../utils/collect-and-send', () => ({
+    collectAndSend: jest.fn(),
+}))
 
 const mockedCollectAndSend = collectAndSend as jest.MockedFunction<
-  typeof collectAndSend
->;
+    typeof collectAndSend
+>
 
-describe("Express application behavior", () => {
-  let app: express.Application;
+describe('Express application behavior', () => {
+    let app: express.Application
 
-  beforeAll(() => {
-    app = express();
-    Decipher.init({ codebaseId: "test-codebase", customerId: "test-customer" });
+    beforeAll(() => {
+        mockedCollectAndSend.mockReset()
 
-    // Define a sample route that does not produce an error
-    app.get("/no-error", (_req, res) => {
-      res.status(200).json({ message: "No error here" });
-    });
+        app = express()
+        Decipher.init({
+            codebaseId: 'test-codebase',
+            customerId: 'test-customer',
+        })
 
-    // Attach the DecipherErrorHandler as it would be in the real app
-    app.use(Decipher.Handlers.errorHandler);
-  });
+        // Define a sample route that does not produce an error
+        app.get('/no-error', (_req, res) => {
+            res.status(200).json({ message: 'No error here' })
+        })
 
-  it("should not invoke DecipherErrorHandler for routes without errors", async () => {
-    const response = await request(app).get("/no-error");
+        // Attach the DecipherErrorHandler as it would be in the real app
+        app.use(Decipher.Handlers.errorHandler)
+    })
 
-    // Check that the response is as expected, indicating no error handling was invoked
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({ message: "No error here" });
+    it('should not invoke DecipherErrorHandler for routes without errors', async () => {
+        const response = await request(app).get('/no-error')
 
-    // Ensure collectAndSend was not called, indirectly showing DecipherErrorHandler was not invoked
-    expect(mockedCollectAndSend).not.toHaveBeenCalled();
-  });
-});
+        // Check that the response is as expected, indicating no error handling was invoked
+        expect(response.status).toBe(200)
+        expect(response.body).toEqual({ message: 'No error here' })
 
-describe("Express application behavior with error", () => {
-  let app: express.Application;
+        // Ensure collectAndSend was not called, indirectly showing DecipherErrorHandler was not invoked
+        expect(mockedCollectAndSend).not.toHaveBeenCalled()
+    })
+})
 
-  beforeAll(() => {
-    app = express();
+describe('Express application behavior with error', () => {
+    let app: express.Application
 
-    Decipher.init({ codebaseId: "test-codebase", customerId: "test-customer" });
+    beforeAll(() => {
+        mockedCollectAndSend.mockReset()
 
-    app.use(Decipher.Handlers.requestHandler());
+        app = express()
 
-    // Define a sample route that deliberately throws an error
-    app.get("/error", (_req, _res) => {
-      // Simulating a call to a nonexistent function to trigger an error
-      throw new Error("Test error");
-    });
+        Decipher.init({
+            codebaseId: 'test-codebase',
+            customerId: 'test-customer',
+        })
 
-    // Attach the DecipherErrorHandler as it would be in the real app
-    app.use(Decipher.Handlers.errorHandler);
-  });
+        app.use(Decipher.Handlers.requestHandler())
 
-  it("should invoke DecipherErrorHandler for routes with errors", async () => {
-    await request(app).get("/error");
+        // Define a sample route that deliberately throws an error
+        app.get('/error', (_req, _res) => {
+            // Simulating a call to a nonexistent function to trigger an error
+            throw new Error('Test error')
+        })
 
-    // Check that collectAndSend was called, indicating DecipherErrorHandler was invoked
-    expect(mockedCollectAndSend).toHaveBeenCalled();
+        // Attach the DecipherErrorHandler as it would be in the real app
+        app.use(Decipher.Handlers.errorHandler)
+    })
 
-    expect(mockedCollectAndSend).toHaveBeenCalledWith(
-      expect.anything(), // The request object
-      {}, // The responseBody, which appears to be an empty object in this case
-      500, // statusCode
-      expect.anything(), // For messages, since it's an array and the exact content might not be important for this test
-      true, // isUncaughtException
-      "test-codebase", // codebaseId
-      "test-customer", // customerId
-      false, // excludeRequestBody
-      expect.any(Error), // For the error object, we're checking if it's an instance of Error
-      undefined
-    );
-  });
-});
+    it('should invoke DecipherErrorHandler for routes with errors', async () => {
+        await request(app).get('/error')
 
-describe("Decipher.captureError functionality", () => {
-  let app: express.Application;
+        // Check that collectAndSend was called, indicating DecipherErrorHandler was invoked
+        expect(mockedCollectAndSend).toHaveBeenCalled()
 
-  beforeAll(() => {
-    app = express();
-    Decipher.init({ codebaseId: "test-codebase", customerId: "test-customer" });
+        expect(mockedCollectAndSend).toHaveBeenCalledWith(
+            expect.anything(), // The request object
+            {}, // The responseBody, which appears to be an empty object in this case
+            500, // statusCode
+            expect.anything(), // For messages, since it's an array and the exact content might not be important for this test
+            true, // isUncaughtException
+            'test-codebase', // codebaseId
+            'test-customer', // customerId
+            false, // excludeRequestBody
+            expect.any(Error), // For the error object, we're checking if it's an instance of Error
+            undefined
+        )
+    })
+})
 
-    app.get("/trigger-error", async (_req, res) => {
-      try {
-        throw new Error("Simulated error");
-      } catch (error) {
-        Decipher.captureError(error);
-        res.status(500).send("Error was captured");
-      }
-    });
+describe('Decipher.captureError functionality', () => {
+    let app: express.Application
 
-    app.use(Decipher.Handlers.errorHandler);
-  });
+    beforeAll(() => {
+        mockedCollectAndSend.mockReset()
 
-  it("should capture errors with a stack trace using Decipher.captureError", async () => {
-    const response = await request(app).get("/trigger-error");
+        app = express()
 
-    expect(response.status).toBe(500);
-    expect(response.text).toContain("Error was captured");
+        Decipher.init({
+            codebaseId: 'test-codebase',
+            customerId: 'test-customer',
+        })
 
-    // Check that collectAndSend was called
-    expect(mockedCollectAndSend).toHaveBeenCalled();
+        app.use(Decipher.Handlers.requestHandler())
 
-    // Get the error object passed to collectAndSend
-    const errorArg = mockedCollectAndSend.mock.calls[0][8]; // Assuming the error object is the 9th argument
+        app.get('/trigger-error', async (_req, res) => {
+            try {
+                throw new Error('Simulated error')
+            } catch (error) {
+                Decipher.captureError(error)
+                res.status(500).send('Error was captured 2')
+            }
+        })
 
-    expect(errorArg).toBeDefined();
+        app.use(Decipher.Handlers.errorHandler)
+    })
 
-    if (errorArg) {
-      // Check that the error object includes a stack trace
-      expect(errorArg).toBeInstanceOf(Error);
-      expect(errorArg.stack).toBeDefined();
-      expect(typeof errorArg.stack).toBe("string");
-    }
-  });
-});
+    it('should capture errors with a stack trace using Decipher.captureError', async () => {
+        const response = await request(app).get('/trigger-error')
 
-describe("Decipher.setUser functionality within Express routes", () => {
-  let app: express.Application;
+        expect(response.status).toBe(500)
+        expect(response.text).toContain('Error was captured')
 
-  beforeAll(() => {
-    app = express();
-    Decipher.init({ codebaseId: "test-codebase", customerId: "test-customer" });
-    app.use(Decipher.Handlers.requestHandler());
+        // Check that collectAndSend was called
+        expect(mockedCollectAndSend).toHaveBeenCalled()
 
-    app.get("/set-user-error", (_req, res) => {
-      try {
-        Decipher.setUser({ email: "user@example.com" }); // Simulating setting the user
-        throw new Error("Simulated error with user set");
-      } catch (error) {
-        Decipher.captureError(error);
-        res.status(500).send("Error with user info was captured");
-      }
-    });
+        // Get the error object passed to collectAndSend
+        const errorArg = mockedCollectAndSend.mock.calls[0][8] // Assuming the error object is the 9th argument
 
-    app.use(Decipher.Handlers.errorHandler);
-  });
+        expect(errorArg).toBeDefined()
 
-  it("should call collectAndSend with the endUser object specified in setUser", async () => {
-    const response = await request(app).get("/set-user-error");
+        if (errorArg) {
+            // Check that the error object includes a stack trace
+            expect(errorArg).toBeInstanceOf(Error)
+            expect(errorArg.stack).toBeDefined()
+            expect(typeof errorArg.stack).toBe('string')
+        }
+    })
+})
 
-    expect(response.status).toBe(500);
-    expect(response.text).toContain("Error with user info was captured");
+describe('Decipher.setUser functionality within Express routes', () => {
+    let app: express.Application
 
-    expect(mockedCollectAndSend).toHaveBeenCalledWith(
-      expect.anything(), // The request object
-      expect.anything(), // The responseBody
-      500, // statusCode
-      expect.anything(), // messages
-      expect.anything(), // isUncaughtException
-      "test-codebase", // codebaseId
-      "test-customer", // customerId
-      expect.anything(), // excludeRequestBody
-      expect.any(Error), // error object
-      expect.objectContaining({ email: "user@example.com" }) // endUser object
-    );
-  });
-});
+    beforeAll(() => {
+        app = express()
+        Decipher.init({
+            codebaseId: 'test-codebase',
+            customerId: 'test-customer',
+        })
+        app.use(Decipher.Handlers.requestHandler())
+
+        app.get('/set-user-error', (_req, res) => {
+            try {
+                Decipher.setUser({ email: 'user@example.com' }) // Simulating setting the user
+                throw new Error('Simulated error with user set')
+            } catch (error) {
+                Decipher.captureError(error)
+                res.status(500).send('Error with user info was captured')
+            }
+        })
+
+        app.use(Decipher.Handlers.errorHandler)
+    })
+
+    it('should call collectAndSend with the endUser object specified in setUser', async () => {
+        const response = await request(app).get('/set-user-error')
+
+        expect(response.status).toBe(500)
+        expect(response.text).toContain('Error with user info was captured')
+
+        expect(mockedCollectAndSend).toHaveBeenCalledWith(
+            expect.anything(), // The request object
+            expect.anything(), // The responseBody
+            500, // statusCode
+            expect.anything(), // messages
+            expect.anything(), // isUncaughtException
+            'test-codebase', // codebaseId
+            'test-customer', // customerId
+            expect.anything(), // excludeRequestBody
+            expect.any(Error), // error object
+            expect.objectContaining({ email: 'user@example.com' }) // endUser object
+        )
+    })
+})

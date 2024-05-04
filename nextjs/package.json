@@ -1,6 +1,6 @@
 {
   "name": "@decipher-sdk/nextjs",
-  "version": "0.1.29",
+  "version": "0.1.31",
   "description": "Official Decipher SDK for Nextjs",
   "main": "dist/decipher-error-handler.js",
   "exports": {

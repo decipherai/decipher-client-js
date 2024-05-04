@@ -61,7 +61,7 @@ export async function collectAndSend(
       data.endUser
     );
   } catch (error) {
-    console.error("Failure sending to Decipher", error);
+    //console.error("Failure sending to Decipher", error);
   }
 }
 
@@ -85,7 +85,7 @@ export async function collectAndSendTrpc(opts: any, data: CollectAndSendData) {
       data.endUser
     );
   } catch (error) {
-    console.error("Failure sending to Decipher for Trpc", error);
+    //console.error("Failure sending to Decipher for Trpc", error);
   }
 }
 
@@ -114,7 +114,7 @@ async function extractRequestData(
         requestBody = await (req as Request).json();
       }
     } catch (error) {
-      console.log(error);
+      //console.log(error);
       requestBody = "Error parsing body:" + error;
     }
   }
@@ -191,10 +191,10 @@ const sendErrorToService = async (
           },
         }
       )
-      .catch((err) =>
-        console.error("Axios error sending issue to Decipher backend", err)
-      );
+      .catch(() => {
+        //console.error("Axios error sending issue to Decipher backend", err)
+      });
   } catch (err) {
-    console.error("Failure sending issue to Decipher backend", err);
+    //console.error("Failure sending issue to Decipher backend", err);
   }
 };

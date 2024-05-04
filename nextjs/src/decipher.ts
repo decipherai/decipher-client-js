@@ -79,9 +79,7 @@ class Decipher {
     const store = asyncLocalStorage.getStore();
     if (store) {
       Object.assign(store, update);
-    } else {
-      console.log("[Decipher] No active async local storage to update");
-    }
+    } 
   }
 
   public setUser(user: User): void {
