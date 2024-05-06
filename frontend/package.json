@@ -1,6 +1,6 @@
 {
   "name": "@decipher-sdk/frontend",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "The official Decipher SDK for your frontend.",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",

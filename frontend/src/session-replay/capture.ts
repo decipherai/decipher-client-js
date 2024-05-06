@@ -25,13 +25,38 @@ interface ErrorEvent {
   error?: Error;
 }
 
-interface ErrorProperties {
-  $exception_type: string;
-  $exception_message: string;
-  $exception_source?: string;
-  $exception_lineno?: number;
-  $exception_colno?: number;
-  $exception_stack_trace_raw?: string;
+type ErrorLike = Error | string | Event | unknown;
+
+const reactMinifiedRegexp = /Minified React error #\d+;/i;
+
+function promiseRejectionToErrorProperties(
+  promiseRejectionEvent: PromiseRejectionEvent
+): ErrorEvent {
+  let error: ErrorLike = promiseRejectionEvent;
+  if ("reason" in promiseRejectionEvent) {
+    error = promiseRejectionEvent.reason as ErrorLike;
+  } else if (
+    "detail" in promiseRejectionEvent &&
+    "reason" in (promiseRejectionEvent as any).detail
+  ) {
+    error = ((promiseRejectionEvent as any).detail as any).reason as ErrorLike;
+  }
+
+  let exceptionMessage = "";
+  if (typeof error === "string") {
+    exceptionMessage = `Non-Error promise rejection captured with value: ${error}`;
+  } else if (error instanceof Error) {
+    exceptionMessage = error.message;
+  } else {
+    exceptionMessage = "UnhandledRejection";
+  }
+
+  // Ensure that the returned object conforms to the ErrorEvent interface
+  const res: ErrorEvent = { message: exceptionMessage };
+  if (error instanceof Error) {
+    res.error = error;
+  }
+  return res;
 }
 
 class DecipherRecording {
@@ -80,7 +105,6 @@ class DecipherRecording {
       return;
     }
     const originalOnError = win.onerror;
-
     win.onerror = (message, source, lineno, colno, error) => {
       this.captureException({ message, source, lineno, colno, error });
       if (originalOnError) {
@@ -90,15 +114,16 @@ class DecipherRecording {
     };
 
     // TODO: Start handling onunhandled rejections
-    // const originalOnUnhandledRejection = win.onunhandledrejection;
-    // win.onunhandledrejection = (event) => {
-    //   console.log("IN win onunhandledrejection");
-    //   this.captureException({ message: event.reason });
-    //   if (originalOnUnhandledRejection) {
-    //     return originalOnUnhandledRejection.call(win, event);
-    //   }
-    //   return true;
-    // };
+    const originalOnUnhandledRejection = win.onunhandledrejection;
+    win.onunhandledrejection = (event) => {
+      this.captureException({
+        ...promiseRejectionToErrorProperties(event)
+      });
+      if (originalOnUnhandledRejection) {
+        return originalOnUnhandledRejection.call(win, event);
+      }
+      return true;
+    };
   }
 
   public captureException({
@@ -109,8 +134,8 @@ class DecipherRecording {
     error,
   }: ErrorEvent) {
     rrweb.record.addCustomEvent("uncaught-error", {
-        message,
-        stackTraceString:  JSON.stringify(error?.stack || ""),
+      message,
+      stackTraceString: JSON.stringify(error?.stack || ""),
     });
   }
 
