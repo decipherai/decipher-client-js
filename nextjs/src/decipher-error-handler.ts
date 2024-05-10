@@ -4,7 +4,11 @@ import { collectAndSend, collectAndSendTrpc } from "./utils/collect-and-send";
 import { DecipherConsole } from "./utils/decipher-console";
 import { DecipherHandlerConfig } from "./utils/handler-config";
 import Decipher from "./decipher";
-import type { AppRouterRequestHandler, AppRouterNextRequestHandler, PageRouterHandler } from "./types";
+import type {
+  AppRouterRequestHandler,
+  AppRouterNextRequestHandler,
+  PageRouterHandler,
+} from "./types";
 
 /* App router wrapper: */
 export function wrapAppRouter(
@@ -59,7 +63,7 @@ export function wrapAppRouter(
             collectAndSend(decipherRequest, {
               respBody: responseBody,
               statusCode: response.status,
-              messages: currentContext?.consoleMessages || [],
+              messages: currentContext?.decipherConsole.getMessages() || [],
               isUncaughtException: false,
               config: filledConfig,
               error: currentContext?.capturedError,
@@ -73,12 +77,14 @@ export function wrapAppRouter(
             // Collect the request/response data and send it to Decipher.
             if (error instanceof Error) {
               const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-              const errorToSend = currentContext?.capturedError ? currentContext.capturedError : error;
+              const errorToSend = currentContext?.capturedError
+                ? currentContext.capturedError
+                : error;
               if (currentContext?.decipherConsole) {
                 collectAndSend(decipherRequest, {
                   respBody: responseBody,
                   statusCode: 500,
-                  messages: currentContext?.consoleMessages || [],
+                  messages: currentContext?.decipherConsole.getMessages() || [],
                   isUncaughtException: true,
                   config: filledConfig,
                   error: errorToSend,
@@ -94,7 +100,7 @@ export function wrapAppRouter(
                 collectAndSend(decipherRequest, {
                   respBody: error,
                   statusCode: 500,
-                  messages: currentContext?.consoleMessages || [],
+                  messages: currentContext?.decipherConsole.getMessages() || [],
                   isUncaughtException: true,
                   config: filledConfig,
                   error: currentContext?.capturedError,
@@ -130,7 +136,7 @@ export function wrapPageRouter<T>(
 export function wrapPageRouter<T>(
   handler: PageRouterHandler<T>,
   config: DecipherHandlerConfig
-): typeof handler 
+): typeof handler;
 
 export function wrapPageRouter<T>(
   handler: PageRouterHandler<T>,
@@ -202,13 +208,14 @@ export function wrapPageRouter<T>(
             });
           }
           return result;
-
         } catch (error) {
-          // If there's an uncaught error, collect and send 
+          // If there's an uncaught error, collect and send
           if (handlerInvoked) {
             const currentContext = Decipher.getCurrentContext();
             if (error instanceof Error) {
-              const errorToSend = currentContext?.capturedError ? currentContext.capturedError : error;
+              const errorToSend = currentContext?.capturedError
+                ? currentContext.capturedError
+                : error;
               if (currentContext?.decipherConsole) {
                 collectAndSend(req, {
                   respBody: responseBody,

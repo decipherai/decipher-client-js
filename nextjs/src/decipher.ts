@@ -2,15 +2,11 @@ import { DecipherConsole } from "./utils/decipher-console";
 // Utilizing AsyncLocalStorage from Node.js to handle asynchronous context management
 const { AsyncLocalStorage } = require("node:async_hooks");
 import type { DecipherHandlerConfig } from "./utils/handler-config";
-import {
-  wrapAppRouter,
-  wrapPageRouter,
-} from "./decipher-error-handler";
+import { wrapAppRouter, wrapPageRouter } from "./decipher-error-handler";
 // import { handleCaptureError } from "./decipher-error-handler";
 import type { NextApiRequest } from "next";
 import { User } from "./utils/collect-and-send";
 // import type { AppRouterRequestHandler, AppRouterNextRequestHandler, PageRouterHandler } from "./types";
-
 
 // Creating an instance of AsyncLocalStorage to store context specific to each request
 const asyncLocalStorage = new AsyncLocalStorage();
@@ -74,7 +70,7 @@ class Decipher {
     const store = asyncLocalStorage.getStore();
     if (store) {
       Object.assign(store, update);
-    } 
+    }
   }
 
   public setUser(user: User): void {
