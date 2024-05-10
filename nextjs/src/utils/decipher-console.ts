@@ -21,10 +21,9 @@ export class DecipherConsole {
   public instrumentConsole() {
     if (this.isInstrumented) return;
 
-    // Use initLogObserver from console-utils.ts, passing the callback to process logs
-    this.restoreConsole = initLogObserver(this.processLog, {
-      // You can customize LogRecordOptions here if needed
-    });
+    // Initiate logging observing and store the return value, which we will use later
+    // to reset console logging.
+    this.restoreConsole = initLogObserver(this.processLog, {});
 
     this.isInstrumented = true;
   }
