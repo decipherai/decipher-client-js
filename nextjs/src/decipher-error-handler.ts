@@ -1,25 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { collectAndSend, collectAndSendTrpc } from "./utils/collect-and-send";
 import { DecipherConsole } from "./utils/decipher-console";
 import { DecipherHandlerConfig } from "./utils/handler-config";
 import Decipher from "./decipher";
-
-type AppRouterRequestHandler = (
-  request: Request
-) => Response | Promise<Response> | NextResponse | Promise<NextResponse>;
-
-type AppRouterNextRequestHandler = (
-  request: NextRequest
-) => Response | Promise<Response> | NextResponse | Promise<NextResponse>;
+import type { AppRouterRequestHandler, AppRouterNextRequestHandler, PageRouterHandler } from "./types";
 
 /* App router wrapper: */
-export function withDecipher(
+export function wrapAppRouter(
   handler: AppRouterRequestHandler | AppRouterNextRequestHandler,
   config: DecipherHandlerConfig
 ): typeof handler;
 
-export function withDecipher(
+export function wrapAppRouter(
   handler: AppRouterRequestHandler | AppRouterNextRequestHandler,
   config: DecipherHandlerConfig
 ): typeof handler {
@@ -80,7 +73,7 @@ export function withDecipher(
             // Collect the request/response data and send it to Decipher.
             if (error instanceof Error) {
               const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-              const errorToSend = currentContext?.capturedError || error; // Determine the error to send
+              const errorToSend = currentContext?.capturedError ? currentContext.capturedError : error;
               if (currentContext?.decipherConsole) {
                 collectAndSend(decipherRequest, {
                   respBody: responseBody,
@@ -128,113 +121,132 @@ export function withDecipher(
   };
 }
 
-type PageRouterHandler<T> = (
-  req: NextApiRequest,
-  res: NextApiResponse<T>
-) => void | NextApiResponse<T> | Promise<void | NextApiResponse<T>>;
-
 /* Page router wrapper: */
-export function wrapApiHandlerWithDecipher<T>(
+export function wrapPageRouter<T>(
   handler: PageRouterHandler<T>,
   config: DecipherHandlerConfig
 ): typeof handler;
 
-export function wrapApiHandlerWithDecipher<T>(
+export function wrapPageRouter<T>(
   handler: PageRouterHandler<T>,
   config: DecipherHandlerConfig
-): typeof handler {
+): typeof handler 
+
+export function wrapPageRouter<T>(
+  handler: PageRouterHandler<T>,
+  config: DecipherHandlerConfig
+): PageRouterHandler<T> {
   const filledConfig = {
-    ...config,
+    ...Decipher.settings,
     excludeRequestBody: !!config.excludeRequestBody,
     environment: config.environment || "production",
   };
 
   return async (req: NextApiRequest, res: NextApiResponse<T>) => {
-    let originalConsole;
-    let decipherConsole;
     let handlerInvoked = false;
-
+    let responseStatus: number = 200; // Default to 200, will be updated with actual response status
     let responseBody: any;
+    return await Decipher.runWithContext(
+      {
+        request: req,
+        consoleMessages: [],
+        decipherConsole: new DecipherConsole(),
+        config: filledConfig,
+      },
+      async () => {
+        try {
+          const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
+          currentContext?.decipherConsole.instrumentConsole(); // Instrument the console for capturing logs
+          currentContext?.decipherConsole.clearMessages(); // Clear any previous messages
+          handlerInvoked = true;
 
-    try {
-      decipherConsole = new DecipherConsole();
-      decipherConsole.instrumentConsole();
-      originalConsole = console;
+          const originalJson = res.json.bind(res);
+          res.json = (body: any) => {
+            responseBody = body;
+            return originalJson(body);
+          };
+          const originalSend = res.send.bind(res);
+          res.send = (body?: any) => {
+            if (body) {
+              responseBody = body;
+            }
+            return originalSend(body);
+          };
+          const originalEnd = res.end.bind(res);
+          res.end = (body?: any) => {
+            if (body) {
+              responseBody = body;
+            }
+            return originalEnd(body);
+          };
 
-      const originalJson = res.json.bind(res);
-      res.json = (body: any) => {
-        // Capture the responseBody; only used in case of uncaught exceptions and non-200s.
-        responseBody = body;
-        return originalJson(body);
-      };
-      const originalSend = res.send.bind(res);
-      res.send = (body?: any) => {
-        // Capture the responseBody if body is provided; only used in case of uncaught exceptions and non-200s.
-        if (body) {
-          responseBody = body;
-        }
-        return originalSend(body);
-      };
-      const originalEnd = res.end.bind(res);
-      res.end = (body?: any) => {
-        // Capture the responseBody if body is provided; only used in case of uncaught exceptions and non-200s.
-        if (body) {
-          responseBody = body;
-        }
-        return originalEnd(body);
-      };
+          const originalStatus = res.status.bind(res);
+          res.status = (status: number) => {
+            responseStatus = status;
+            return originalStatus(status);
+          };
 
-      handlerInvoked = true;
-      const result = await handler(req, res); // Run the handler as normal.
-      return result;
-    } catch (error) {
-      if (handlerInvoked) {
-        // This branch handles uncaught exceptions thrown by the handler; these have stack traces.
-        // Collect the request/response data and send it to Decipher.
-        const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-        if (error instanceof Error) {
-          const errorToSend = currentContext?.capturedError || error; // Determine the error to send
-          if (decipherConsole) {
+          const result = await handler(req, res); // Run the handler as normal.
+
+          // If an error has been captured, collect and send
+          if (currentContext?.capturedError) {
+            // Non-2xx/3xx status code detected
             collectAndSend(req, {
               respBody: responseBody,
-              statusCode: 500,
-              messages: decipherConsole.getMessages(),
-              isUncaughtException: true,
+              statusCode: responseStatus,
+              messages: currentContext?.consoleMessages || [],
+              isUncaughtException: false,
               config: filledConfig,
-              error: errorToSend,
+              error: currentContext.capturedError,
+              endUser: currentContext.endUser,
             });
           }
-        } else {
-          // This else condition is needed because it's possible to throw non-Error objects
-          // e.g. `throw "error happened"` (string)
-          if (decipherConsole) {
-            collectAndSend(req, {
-              respBody: error,
-              statusCode: 500,
-              messages: decipherConsole.getMessages(),
-              isUncaughtException: true,
-              config: filledConfig,
-              error: currentContext?.capturedError,
-              endUser: currentContext?.endUser,
-            });
+          return result;
+
+        } catch (error) {
+          // If there's an uncaught error, collect and send 
+          if (handlerInvoked) {
+            const currentContext = Decipher.getCurrentContext();
+            if (error instanceof Error) {
+              const errorToSend = currentContext?.capturedError ? currentContext.capturedError : error;
+              if (currentContext?.decipherConsole) {
+                collectAndSend(req, {
+                  respBody: responseBody,
+                  statusCode: 500,
+                  messages: currentContext?.consoleMessages || [],
+                  isUncaughtException: true,
+                  config: filledConfig,
+                  error: errorToSend,
+                  endUser: currentContext?.endUser,
+                });
+              }
+            } else {
+              if (currentContext?.decipherConsole) {
+                collectAndSend(req, {
+                  respBody: error,
+                  statusCode: 500,
+                  messages: currentContext?.consoleMessages || [],
+                  isUncaughtException: true,
+                  config: filledConfig,
+                  error: currentContext?.capturedError,
+                  endUser: currentContext?.endUser,
+                });
+              }
+            }
+            throw error;
+          } else {
+            const result = await handler(req, res);
+            return result;
+          }
+        } finally {
+          const currentContext = Decipher.getCurrentContext();
+          if (currentContext) {
+            currentContext.decipherConsole.resetConsole(); // Reset the console to its original state
+            currentContext.decipherConsole.clearMessages(); // Clear captured console messages
           }
         }
-        throw error;
-      } else {
-        // Something went wrong with Decipher's initialization logic; just run the handler as normal and
-        // return the result.
-        const result = await handler(req, res);
-        return result;
       }
-    } finally {
-      // After the request is handled, restore the original console methods
-      if (originalConsole) {
-        console = originalConsole;
-      }
-      if (decipherConsole) {
-        decipherConsole.clearMessages();
-      }
-    }
+    );
   };
 }
 
@@ -300,29 +312,29 @@ export function decipherTrpcMiddleware(config: DecipherHandlerConfig) {
   };
 }
 
-export function handleCaptureError() {
-  const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-  // TRPC case
-  if (currentContext?.opts) {
-    collectAndSendTrpc(currentContext?.opts, {
-      respBody: {},
-      messages: currentContext?.consoleMessages || [],
-      isUncaughtException: false,
-      config: currentContext?.config,
-      error: currentContext?.capturedError,
-      endUser: currentContext?.endUser,
-    });
-  }
+// export function handleCaptureError() {
+//   const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
+//   // TRPC case
+//   if (currentContext?.opts) {
+//     collectAndSendTrpc(currentContext?.opts, {
+//       respBody: {},
+//       messages: currentContext?.consoleMessages || [],
+//       isUncaughtException: false,
+//       config: currentContext?.config,
+//       error: currentContext?.capturedError,
+//       endUser: currentContext?.endUser,
+//     });
+//   }
 
-  // Non TRPC
-  else if (currentContext?.capturedError && currentContext.request) {
-    collectAndSend(currentContext.request, {
-      respBody: {},
-      messages: currentContext.consoleMessages || [],
-      isUncaughtException: false,
-      config: currentContext.config,
-      error: currentContext.capturedError,
-      endUser: currentContext?.endUser,
-    });
-  }
-}
+//   // Non TRPC
+//   else if (currentContext?.capturedError && currentContext.request) {
+//     collectAndSend(currentContext.request, {
+//       respBody: {},
+//       messages: currentContext.consoleMessages || [],
+//       isUncaughtException: false,
+//       config: currentContext.config,
+//       error: currentContext.capturedError,
+//       endUser: currentContext?.endUser,
+//     });
+//   }
+// }

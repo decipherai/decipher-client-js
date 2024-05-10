@@ -3,13 +3,14 @@ import { DecipherConsole } from "./utils/decipher-console";
 const { AsyncLocalStorage } = require("node:async_hooks");
 import type { DecipherHandlerConfig } from "./utils/handler-config";
 import {
-  withDecipher,
-  wrapApiHandlerWithDecipher,
+  wrapAppRouter,
+  wrapPageRouter,
 } from "./decipher-error-handler";
-import { handleCaptureError } from "./decipher-error-handler";
-
+// import { handleCaptureError } from "./decipher-error-handler";
 import type { NextApiRequest } from "next";
 import { User } from "./utils/collect-and-send";
+// import type { AppRouterRequestHandler, AppRouterNextRequestHandler, PageRouterHandler } from "./types";
+
 
 // Creating an instance of AsyncLocalStorage to store context specific to each request
 const asyncLocalStorage = new AsyncLocalStorage();
@@ -45,7 +46,6 @@ class Decipher {
     return Decipher.instance;
   }
 
-  // Add logging to init method to confirm settings are being initialized
   public init(config: DecipherHandlerConfig): void {
     this.settings = {
       ...this.settings,
@@ -53,16 +53,11 @@ class Decipher {
     };
   }
 
-  // Add logging to captureError to see when errors are captured
   public captureError(error: Error): void {
     let context = this.getCurrentContext();
     if (context) {
       context.capturedError = error;
     }
-
-    try {
-      handleCaptureError();
-    } catch (e) {}
   }
 
   // Function to access and change processingLog state
@@ -99,13 +94,12 @@ class Decipher {
     }
   }
 
-  // INTERNAL
-  public async runWithContext(
+  public async runWithContext<T>(
     context: DecipherContext,
-    fn: () => Promise<Response>
-  ): Promise<Response> {
+    fn: () => Promise<T>
+  ): Promise<T> {
     const result = await asyncLocalStorage.run(context, fn);
-    return result; // Returning the Response object obtained from fn
+    return result; // Returning the result obtained from fn, which can be of any type T
   }
 
   // Add logging to getCurrentContext to see when context is retrieved
@@ -115,11 +109,14 @@ class Decipher {
   }
 
   public withDecipher(handler: any): typeof handler {
-    let response = withDecipher(handler, this.settings);
+    let response = wrapAppRouter(handler, this.settings);
     return response;
   }
 
-  public wrapApiHandlerWithDecipher = wrapApiHandlerWithDecipher;
+  public withDecipherPage(handler: any): typeof handler {
+    let response = wrapPageRouter(handler, this.settings);
+    return response;
+  }
 }
 
 export { asyncLocalStorage };
