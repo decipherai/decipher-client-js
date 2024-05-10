@@ -169,7 +169,7 @@ export function initLogObserver(
           }
           inStack = true;
           try {
-            // From the rrweb fork; we currently don't parse stacks.
+            // Commented code below is from the rrweb fork; we currently don't parse stacks.
             // const trace = ErrorStackParser.parse(new Error())
             //   .map((stackFrame: StackFrame) => stackFrame.toString())
             //   .splice(1); // splice(1) to omit the hijacked log function
