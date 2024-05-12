@@ -15,7 +15,7 @@ export async function validateAndUploadSourcemaps(
   path: string
 ): Promise<void> {
   const serverUrl =
-    process.env.DECIPHER_SERVER_URL || "https://prod.getdecipher.com";
+    process.env.DECIPHER_SERVER_URL || "https://www.prod.getdecipher.com";
   try {
     // Find all sourcemap files in the specified path
     const sourcemaps = glob.sync("**/*.{js,js.map}", {
@@ -45,7 +45,6 @@ export async function validateAndUploadSourcemaps(
         },
         body: fileContent,
       });
-
       if (!uploadResponse.ok) {
         console.error(`Failed to upload ${sourcemap}.`);
       }

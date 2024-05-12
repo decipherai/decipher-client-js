@@ -115,7 +115,7 @@ export function createDebugIdUploadFunction({
         await validateAndUploadSourcemaps(apiKey, tmpUploadFolder);
 
         logger.info(
-          `Successfully uploaded source maps to Decipher with size: ${uploadSize}`
+          `Successfully uploaded sourcemaps to Decipher with size: ${uploadSize}`
         );
       }
 
