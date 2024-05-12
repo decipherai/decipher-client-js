@@ -9,6 +9,9 @@
     "outDir": "./dist",
     "declaration": true, // Generates corresponding '.d.ts' file.
     "declarationMap": true, // Creates a source map file for the declarations.
+    "strictBindCallApply": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true, // needed to import package.json
   },
   "type": "module",
   "include": ["src/**/*"],

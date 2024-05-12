@@ -119,3 +119,4 @@ export { asyncLocalStorage };
 
 // Exports a singleton instance of the Decipher class
 export default Decipher.getInstance();
+export { withDecipherConfig } from "./config/withDecipherConfig";

@@ -106,7 +106,6 @@ export function patch(
       //
     };
     // This can throw if multiple fill happens on a global object like XMLHttpRequest
-    // Fixes https://github.com/getsentry/sentry-javascript/issues/2043
   }
 }
 
