@@ -11,6 +11,7 @@
     "declarationMap": true, // Creates a source map file for the declarations.
     "strictBindCallApply": true,
     "skipLibCheck": true,
+    "allowJs": true,
     "resolveJsonModule": true, // needed to import package.json
   },
   "type": "module",
