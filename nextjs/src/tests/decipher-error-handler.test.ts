@@ -214,8 +214,6 @@ describe("Next.js API route behavior", () => {
 
       expect(result.status).toBe(500);
       expect(await result.text()).toContain("Error was captured");
-
-      console.log(mockedCollectAndSend.mock.calls[0]);
       
       expect(mockedCollectAndSend).toHaveBeenCalled();
       expect(mockedCollectAndSend).toHaveBeenCalledWith(
@@ -352,6 +350,36 @@ describe("Next.js API route behavior", () => {
           endUser: expect.objectContaining({ email: "test@test.com" }),
           error: expect.any(Error),
         })
+      );
+    });
+  });
+  describe("Decipher log capturing functionality", () => {
+    it("should capture console logs in the handler", async () => {
+      const request = new NextRequest("http://test.com/logs");
+
+      mockAppHandler.mockImplementation(async (_req) => {
+        console.log("Custom log message 1");
+        console.warn("Custom log message 2");
+        throw new Error("Failure in processing");
+      });
+
+      const wrappedHandler = Decipher.withDecipher(mockAppHandler);
+      try {
+        await wrappedHandler(request);
+      } catch {}
+       // Check the captured logs
+      const capturedLogs = mockedCollectAndSend.mock.calls[0][1].messages;
+      expect(capturedLogs).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            message: "\"Custom log message 1\"",
+            level: "log",
+          }),
+          expect.objectContaining({
+            message: "\"Custom log message 2\"",
+            level: "warn",
+          }),
+        ])
       );
     });
   });

@@ -1,9 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { NextRequest } from "next/server";
 import { collectAndSend, collectAndSendTrpc } from "./utils/collect-and-send";
-import { DecipherConsole } from "./utils/decipher-console";
 import { DecipherHandlerConfig } from "./utils/handler-config";
 import Decipher from "./decipher";
+import { v4 as uuidv4 } from "uuid";
+
 import type {
   AppRouterRequestHandler,
   AppRouterNextRequestHandler,
@@ -34,15 +35,12 @@ export function wrapAppRouter(
       {
         request: request,
         consoleMessages: [],
-        decipherConsole: new DecipherConsole(),
         config: filledConfig,
+        requestId: uuidv4(),
       },
       async () => {
         try {
           const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-          currentContext?.decipherConsole.instrumentConsole(); // Instrument the console for capturing logs
-          currentContext?.decipherConsole.clearMessages(); // Clear any previous messages
-
           handlerInvoked = true;
           if (!filledConfig.excludeRequestBody) {
             // Clone the request if we're capturing body, so that we can
@@ -63,7 +61,7 @@ export function wrapAppRouter(
             collectAndSend(decipherRequest, {
               respBody: responseBody,
               statusCode: response.status,
-              messages: currentContext?.decipherConsole.getMessages() || [],
+              messages: currentContext?.consoleMessages || [],
               isUncaughtException: false,
               config: filledConfig,
               error: currentContext?.capturedError,
@@ -80,33 +78,30 @@ export function wrapAppRouter(
               const errorToSend = currentContext?.capturedError
                 ? currentContext.capturedError
                 : error;
-              if (currentContext?.decipherConsole) {
-                collectAndSend(decipherRequest, {
-                  respBody: responseBody,
-                  statusCode: 500,
-                  messages: currentContext?.decipherConsole.getMessages() || [],
-                  isUncaughtException: true,
-                  config: filledConfig,
-                  error: errorToSend,
-                  endUser: currentContext?.endUser,
-                });
-              }
+              collectAndSend(decipherRequest, {
+                respBody: responseBody,
+                statusCode: 500,
+                messages: currentContext?.consoleMessages || [],
+                isUncaughtException: true,
+                config: filledConfig,
+                error: errorToSend,
+                endUser: currentContext?.endUser,
+              });
               throw error;
             } else {
               // This else condition is needed because it's possible to throw non-Error objects
               // e.g. `throw "error happened"` (string)
+
               const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-              if (currentContext?.decipherConsole) {
-                collectAndSend(decipherRequest, {
-                  respBody: error,
-                  statusCode: 500,
-                  messages: currentContext?.decipherConsole.getMessages() || [],
-                  isUncaughtException: true,
-                  config: filledConfig,
-                  error: currentContext?.capturedError,
-                  endUser: currentContext?.endUser,
-                });
-              }
+              collectAndSend(decipherRequest, {
+                respBody: error,
+                statusCode: 500,
+                messages: currentContext?.consoleMessages || [],
+                isUncaughtException: true,
+                config: filledConfig,
+                error: currentContext?.capturedError,
+                endUser: currentContext?.endUser,
+              });
             }
           } else {
             // Something went wrong with Decipher's initialization logic; just run the handler as normal and
@@ -115,11 +110,6 @@ export function wrapAppRouter(
             return result;
           }
         } finally {
-          const currentContext = Decipher.getCurrentContext();
-          if (currentContext) {
-            currentContext.decipherConsole.resetConsole(); // Reset the console to its original state
-            currentContext.decipherConsole.clearMessages(); // Clear captured console messages
-          }
         }
         return new Response();
       }
@@ -156,14 +146,12 @@ export function wrapPageRouter<T>(
       {
         request: req,
         consoleMessages: [],
-        decipherConsole: new DecipherConsole(),
         config: filledConfig,
+        requestId: uuidv4(),
       },
       async () => {
         try {
           const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-          currentContext?.decipherConsole.instrumentConsole(); // Instrument the console for capturing logs
-          currentContext?.decipherConsole.clearMessages(); // Clear any previous messages
           handlerInvoked = true;
 
           const originalJson = res.json.bind(res);
@@ -216,29 +204,25 @@ export function wrapPageRouter<T>(
               const errorToSend = currentContext?.capturedError
                 ? currentContext.capturedError
                 : error;
-              if (currentContext?.decipherConsole) {
-                collectAndSend(req, {
-                  respBody: responseBody,
-                  statusCode: 500,
-                  messages: currentContext?.consoleMessages || [],
-                  isUncaughtException: true,
-                  config: filledConfig,
-                  error: errorToSend,
-                  endUser: currentContext?.endUser,
-                });
-              }
+              collectAndSend(req, {
+                respBody: responseBody,
+                statusCode: 500,
+                messages: currentContext?.consoleMessages || [],
+                isUncaughtException: true,
+                config: filledConfig,
+                error: errorToSend,
+                endUser: currentContext?.endUser,
+              });
             } else {
-              if (currentContext?.decipherConsole) {
-                collectAndSend(req, {
-                  respBody: error,
-                  statusCode: 500,
-                  messages: currentContext?.consoleMessages || [],
-                  isUncaughtException: true,
-                  config: filledConfig,
-                  error: currentContext?.capturedError,
-                  endUser: currentContext?.endUser,
-                });
-              }
+              collectAndSend(req, {
+                respBody: error,
+                statusCode: 500,
+                messages: currentContext?.consoleMessages || [],
+                isUncaughtException: true,
+                config: filledConfig,
+                error: currentContext?.capturedError,
+                endUser: currentContext?.endUser,
+              });
             }
             throw error;
           } else {
@@ -246,11 +230,6 @@ export function wrapPageRouter<T>(
             return result;
           }
         } finally {
-          const currentContext = Decipher.getCurrentContext();
-          if (currentContext) {
-            currentContext.decipherConsole.resetConsole(); // Reset the console to its original state
-            currentContext.decipherConsole.clearMessages(); // Clear captured console messages
-          }
         }
       }
     );
@@ -271,14 +250,12 @@ export function decipherTrpcMiddleware(config: DecipherHandlerConfig) {
         {
           opts: opts,
           consoleMessages: [],
-          decipherConsole: new DecipherConsole(),
           config: filledConfig,
+          requestId: uuidv4(),
         },
         async () => {
           try {
             const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-            currentContext?.decipherConsole.instrumentConsole(); // Instrument the console for capturing logs
-            currentContext?.decipherConsole.clearMessages(); // Clear any previous messages
 
             // Proceed with the next middleware or the actual procedure
             result = await opts.next();
@@ -305,11 +282,6 @@ export function decipherTrpcMiddleware(config: DecipherHandlerConfig) {
               return result;
             }
           } finally {
-            const currentContext = Decipher.getCurrentContext();
-            if (currentContext) {
-              currentContext.decipherConsole.resetConsole(); // Reset the console to its original state
-              currentContext.decipherConsole.clearMessages(); // Clear captured console messages
-            }
           }
         }
       );

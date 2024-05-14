@@ -109,12 +109,24 @@ export function patch(
   }
 }
 
+declare global {
+  interface Console {
+    __DECIPHER_INSTRUMENTED__?: boolean;
+  }
+}
 // Forked from https://github.com/rrweb-io/rrweb/blob/e96f668c86bd0ab5dc190bb2957a170271bb2ebc/packages/rrweb/src/plugins/console/record/index.ts#L91
 // We make some changes to what's actually captured from the logs, e.g. currently we don't parse stack traces.
-export function initLogObserver(
+// And since this is running in node, we only override the global console object once.
+export function maybeInitLogObserver(
   cb: logCallback,
   options: LogRecordOptions
 ): () => void {
+  if (console.__DECIPHER_INSTRUMENTED__) {
+    // already instrumented, no need to cleanup on this one; the original will.
+    return () => {};
+  }
+  console.__DECIPHER_INSTRUMENTED__ = true;
+
   const logOptions = (
     options ? Object.assign({}, defaultLogOptions, options) : defaultLogOptions
   ) as {
@@ -139,6 +151,7 @@ export function initLogObserver(
     cancelHandlers.push(replace(logger, levelType));
   }
   return () => {
+    console.__DECIPHER_INSTRUMENTED__ = false;
     cancelHandlers.forEach((h) => h());
   };
 
@@ -154,52 +167,37 @@ export function initLogObserver(
       };
     }
     // replace the logger.{level}. return a restore function
-    return patch(
-      _logger,
-      level,
-      (original) => {
-        return (...args: Array<unknown>) => {
+    return patch(_logger, level, (original) => {
+      return (...args: Array<unknown>) => {
+        // @ts-expect-error
+        original.apply(console, args);
+        if (inStack) {
+          // If we are already in a stack this means something from the following code is calling a console method
+          // likely a proxy method called from stringify. We don't want to log this as it will cause an infinite loop
+          return;
+        }
+        inStack = true;
+        try {
+          // Commented code below is from the rrweb fork; we currently don't parse stacks.
+          // const trace = ErrorStackParser.parse(new Error())
+          //   .map((stackFrame: StackFrame) => stackFrame.toString())
+          //   .splice(1); // splice(1) to omit the hijacked log function
+          const payload = args.map((s) =>
+            stringify(s, logOptions.stringifyOptions)
+          );
+          logCount++;
+          cb({
+            level,
+            trace: [],
+            payload,
+          });
+        } catch (error) {
           // @ts-expect-error
-          original.apply(console, args);
-          if (inStack) {
-            // If we are already in a stack this means something from the following code is calling a console method
-            // likely a proxy method called from stringify. We don't want to log this as it will cause an infinite loop
-            return;
-          }
-          inStack = true;
-          try {
-            // Commented code below is from the rrweb fork; we currently don't parse stacks.
-            // const trace = ErrorStackParser.parse(new Error())
-            //   .map((stackFrame: StackFrame) => stackFrame.toString())
-            //   .splice(1); // splice(1) to omit the hijacked log function
-            const payload = args.map((s) =>
-              stringify(s, logOptions.stringifyOptions)
-            );
-            logCount++;
-            if (logCount < logOptions.lengthThreshold) {
-              cb({
-                level,
-                trace: [],
-                payload,
-              });
-            } else if (logCount === logOptions.lengthThreshold) {
-              // notify the user
-              cb({
-                level: "warn",
-                trace: [],
-                payload: [
-                  stringify("[Decipher] The number of log records reached the threshold."),
-                ],
-              });
-            }
-          } catch (error) {
-            // @ts-expect-error
-            original("[Decipher] logger error:", error, ...args);
-          } finally {
-            inStack = false;
-          }
-        };
-      },
-    );
+          original("[Decipher] logger error:", error, ...args);
+        } finally {
+          inStack = false;
+        }
+      };
+    });
   }
 }
