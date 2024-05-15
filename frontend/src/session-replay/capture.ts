@@ -1,3 +1,4 @@
+"use client";
 import * as rrweb from "rrweb";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -5,7 +6,7 @@ import {
   type listenerHandler,
   RecordPlugin,
 } from "@rrweb/types";
-import { DecipherFrontendConfig } from "../types/decipher-types";
+import { DecipherFrontendConfig, User } from "../types/decipher-types";
 
 const BASE_URL = "https://www.prod.getdecipher.com";
 const RECORDING_BUFFER_TIMEOUT = 7000;
@@ -26,8 +27,6 @@ interface ErrorEvent {
 }
 
 type ErrorLike = Error | string | Event | unknown;
-
-const reactMinifiedRegexp = /Minified React error #\d+;/i;
 
 function promiseRejectionToErrorProperties(
   promiseRejectionEvent: PromiseRejectionEvent
@@ -65,14 +64,21 @@ class DecipherRecording {
   private sessionId: string = "";
   private customerId: DecipherFrontendConfig["customerId"];
   private codebaseId: DecipherFrontendConfig["codebaseId"];
+  private user: User | undefined;
   private plugins: RecordPlugin[];
+  private stopRecording: listenerHandler | undefined;
+  private isStopped: boolean = false;
 
-  constructor({ customerId, codebaseId }: DecipherFrontendConfig) {
+  constructor({ customerId, codebaseId, user }: DecipherFrontendConfig) {
     this.customerId = customerId;
     this.codebaseId = codebaseId;
+    this.user = undefined;
+    if (user && (user.email || user.id !== 0 || user.username)) {
+      this.user = user;
+    }
     this.plugins = [
       rrweb.getRecordConsolePlugin({
-        level: ["info", "warn", "error"],
+        level: ["log", "info", "warn", "error"],
         lengthThreshold: 10000,
         stringifyOptions: {
           stringLengthLimit: 1000,
@@ -94,6 +100,7 @@ class DecipherRecording {
         },
         plugins: this.plugins,
       }) || undefined;
+    this.stopRecording = stopRecording;
 
     this.setupErrorHandlers();
 
@@ -113,11 +120,10 @@ class DecipherRecording {
       return false;
     };
 
-    // TODO: Start handling onunhandled rejections
     const originalOnUnhandledRejection = win.onunhandledrejection;
     win.onunhandledrejection = (event) => {
       this.captureException({
-        ...promiseRejectionToErrorProperties(event)
+        ...promiseRejectionToErrorProperties(event),
       });
       if (originalOnUnhandledRejection) {
         return originalOnUnhandledRejection.call(win, event);
@@ -155,14 +161,35 @@ class DecipherRecording {
           sessionId: this.sessionId,
           customerId: this.customerId,
           codebaseId: this.codebaseId,
+          user: this.user,
         }),
-      });
+      })
+        .then((response) => {
+          if (!response.ok) {
+            this.endRecording();
+          }
+        })
+        .catch(() => {
+          this.endRecording();
+        });
 
       this.buffer.data = [];
     }
   }
 
+  public endRecording() {
+    this.isStopped = true;
+    if (this.flushTimer) {
+      clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
+    this.stopRecording?.();
+  }
+
   private handleEventBuffering(event: eventWithTime) {
+    if (this.isStopped) {
+      return;
+    }
     this.buffer.data.push(event);
 
     if (!this.flushTimer) {

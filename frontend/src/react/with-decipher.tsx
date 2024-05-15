@@ -1,28 +1,12 @@
 "use client";
 import React, { useEffect } from 'react';
-import { DecipherRecording } from '../session-replay/capture';
 import { DecipherFrontendConfig } from '../types/decipher-types';
+import Decipher from '../decipher';
 
-const WithDecipher: React.FC<DecipherFrontendConfig> = ({ customerId, codebaseId }) => {
+const WithDecipher: React.FC<DecipherFrontendConfig> = ({ customerId, codebaseId, user }) => {
     useEffect(() => {
-        if (!customerId || !codebaseId) {
-            console.error("[Decipher] DecipherCaptureComponent requires both customerId and codebaseId");
-            return;
-        }
-        const decipherRecording = new DecipherRecording({ customerId, codebaseId });
-        const stopRecording = decipherRecording.startRecording();
-
-        // Set up exception capturing
-        const originalOnError = window.onerror;
-        const originalOnUnhandledRejection = window.onunhandledrejection;
-
-        return () => { // Stop recording and error capturing on unmount.
-            stopRecording?.();
-
-            window.onerror = originalOnError;
-            window.onunhandledrejection = originalOnUnhandledRejection;
-        };
-    }, [customerId, codebaseId]);
+        Decipher.init({ customerId, codebaseId, user });
+    }, [customerId, codebaseId, user]);
 
     return null; // We render nothing; component exists just to start/stop capture (for now).
 };
