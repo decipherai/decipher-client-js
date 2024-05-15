@@ -63,7 +63,8 @@ export async function validateAndUploadSourcemaps(
         body: fileContent,
       });
       if (!uploadResponse.ok) {
-        console.error(`[Decipher] Failed to upload ${file}.`);
+        console.error(`[Decipher] Failed to upload ${file}. Response:`);
+        console.error(uploadResponse);
       }
     }
   } catch (error) {
