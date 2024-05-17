@@ -8,7 +8,7 @@ import {
 } from "@rrweb/types";
 import { DecipherFrontendConfig, User } from "../types/decipher-types";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "https://www.prod.getdecipher.com";
 const RECORDING_BUFFER_TIMEOUT = 7000;
 
 const win: (Window & typeof globalThis) | undefined =
