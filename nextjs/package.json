@@ -1,6 +1,6 @@
 {
   "name": "@decipher-sdk/nextjs",
-  "version": "0.1.41",
+  "version": "0.1.42",
   "description": "Official Decipher SDK for Nextjs",
   "main": "dist/decipher.js",
   "exports": {

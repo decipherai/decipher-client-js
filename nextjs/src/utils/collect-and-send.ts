@@ -2,6 +2,10 @@ import axios from "axios";
 
 import type { NextApiRequest } from "next";
 import { DecipherHandlerConfig } from "./handler-config";
+import { Exception } from "./types";
+import { nodeStackParser } from "./stack_trace/node-stack-trace";
+import { applyDebugIds } from "./event_builder/prepareEvent";
+import { exceptionFromError } from "./event_builder/eventbuilder";
 
 export type User = {
   id?: number | string;
@@ -35,6 +39,14 @@ interface CollectAndSendData {
   endUser?: User | null;
 }
 
+function createFilledExceptionObject(error: Error): Exception {
+  const exception: Exception = exceptionFromError(nodeStackParser, error);
+  if (exception.stacktrace?.frames?.length) {
+    applyDebugIds(exception, nodeStackParser);
+  }
+  return exception;
+}
+
 export async function collectAndSend(
   req: NextApiRequest | Request,
   data: CollectAndSendData
@@ -45,9 +57,12 @@ export async function collectAndSend(
       req,
       !!data.config.excludeRequestBody
     );
-    // Non-200s get logged; uncaught exceptions are caught below (in the `catch` block)
+    const exception = data.error
+      ? createFilledExceptionObject(data.error)
+      : null;
     sendErrorToService(
       data.error?.stack || "",
+      exception,
       errorTimestamp,
       parsedData.url,
       parsedData.endpoint,
@@ -69,9 +84,14 @@ export async function collectAndSendTrpc(opts: any, data: CollectAndSendData) {
   try {
     const errorTimestamp = new Date().toISOString();
     const parsedData = await extractTrpcRequestData(opts);
+    const exception = data.error
+      ? createFilledExceptionObject(data.error)
+      : null;
+
     // Non-200s get logged; uncaught exceptions are caught below (in the `catch` block)
     sendErrorToService(
       data.error?.stack || "",
+      exception,
       errorTimestamp,
       parsedData.url,
       parsedData.endpoint,
@@ -150,6 +170,7 @@ async function extractRequestData(
 
 const sendErrorToService = async (
   errorStack: string,
+  exception: Exception | null, // This is preferred over errorStack as it contains a more useful stack trace including debug IDs etc. Older versions of the SDK don't have this.
   timestamp: string,
   requestURL: URL | string,
   requestEndpoint: string,
@@ -166,6 +187,8 @@ const sendErrorToService = async (
     codebase_id: config.codebaseId,
     timestamp: timestamp,
     error_stack: errorStack,
+    // parsedStack is preferred over errorStack as it contains a more useful stack trace including debug IDs etc. Older versions of the SDK don't have this.
+    exception: exception,
     customer_id: config.customerId,
     request_endpoint: requestEndpoint,
     request_headers: requestHeaders,
