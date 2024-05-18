@@ -1,5 +1,5 @@
 {
-  "name": "types",
+  "name": "@decipher-sdk/types",
   "version": "0.0.1",
   "description": "Types for Decipher TypeScript SDKs",
   "main": "dist/index.js",
