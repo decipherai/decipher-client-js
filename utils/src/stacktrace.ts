@@ -1,4 +1,3 @@
-// Forked from https://github.com/getsentry/sentry-javascript/blob/531779300c186f89afff0c5bad9f802b2140a325/packages/utils/src/stacktrace.ts.
 import type { StackFrame, StackLineParser, StackParser } from '@decipher-sdk/types';
 
 const STACKTRACE_FRAME_LIMIT = 50;
@@ -10,8 +9,8 @@ const STRIP_FRAME_REGEXP = /captureMessage|captureException/;
 /**
  * Creates a stack parser with the supplied line parsers
  *
- * StackFrames are returned in the correct order for Decipher Exception
- * frames and with Decipher SDK internal frames removed from the top and bottom
+ * StackFrames are returned in the correct order for Sentry Exception
+ * frames and with Sentry SDK internal frames removed from the top and bottom
  *
  */
 export function createStackParser(...parsers: StackLineParser[]): StackParser {
@@ -55,7 +54,7 @@ export function createStackParser(...parsers: StackLineParser[]): StackParser {
       }
     }
 
-    return stripDecipherFramesAndReverse(frames.slice(framesToPop));
+    return stripSentryFramesAndReverse(frames.slice(framesToPop));
   };
 }
 
@@ -73,12 +72,12 @@ export function stackParserFromStackParserOptions(stackParser: StackParser | Sta
 }
 
 /**
- * Removes Decipher frames from the top and bottom of the stack if present and enforces a limit of max number of frames.
+ * Removes Sentry frames from the top and bottom of the stack if present and enforces a limit of max number of frames.
  * Assumes stack input is ordered from top to bottom and returns the reverse representation so call site of the
  * function that caused the crash is the last frame in the array.
  * @hidden
  */
-export function stripDecipherFramesAndReverse(stack: ReadonlyArray<StackFrame>): StackFrame[] {
+export function stripSentryFramesAndReverse(stack: ReadonlyArray<StackFrame>): StackFrame[] {
   if (!stack.length) {
     return [];
   }
@@ -86,7 +85,7 @@ export function stripDecipherFramesAndReverse(stack: ReadonlyArray<StackFrame>):
   const localStack = Array.from(stack);
 
   // If stack starts with one of our API calls, remove it (starts, meaning it's the top of the stack - aka last call)
-  if (/decipherWrapped/.test(localStack[localStack.length - 1].function || '')) {
+  if (/sentryWrapped/.test(localStack[localStack.length - 1].function || '')) {
     localStack.pop();
   }
 
@@ -97,13 +96,13 @@ export function stripDecipherFramesAndReverse(stack: ReadonlyArray<StackFrame>):
   if (STRIP_FRAME_REGEXP.test(localStack[localStack.length - 1].function || '')) {
     localStack.pop();
 
-    // When using synthetic events, we will have a 2 levels deep stack, as `new Error('Decipher syntheticException')`
+    // When using synthetic events, we will have a 2 levels deep stack, as `new Error('Sentry syntheticException')`
     // is produced within the hub itself, making it:
     //
-    //   Decipher.captureException()
+    //   Sentry.captureException()
     //   getCurrentHub().captureException()
     //
-    // instead of just the top `Decipher` call itself.
+    // instead of just the top `Sentry` call itself.
     // This forces us to possibly strip an additional frame in the exact same was as above.
     if (STRIP_FRAME_REGEXP.test(localStack[localStack.length - 1].function || '')) {
       localStack.pop();

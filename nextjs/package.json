@@ -1,6 +1,6 @@
 {
   "name": "@decipher-sdk/nextjs",
-  "version": "0.1.42",
+  "version": "0.1.43",
   "description": "Official Decipher SDK for Nextjs",
   "main": "dist/decipher.js",
   "exports": {
@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@decipher-sdk/types": "^0.0.1",
+    "@decipher-sdk/utils": "^0.0.1",
     "axios": "^1.6.7",
     "cross-fetch": "^4.0.0",
     "dotenv": "^16.4.5",

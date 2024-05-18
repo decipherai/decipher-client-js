@@ -8,8 +8,7 @@ import {
 } from "@rrweb/types";
 import { DecipherFrontendConfig, User } from "../types/decipher-types";
 import { Exception } from "@decipher-sdk/types";
-import { exceptionFromError } from "../utils/event_builder/eventbuilder";
-import { applyDebugIds } from "../utils/event_builder/prepareEvent";
+import { exceptionFromError, applyDebugIds } from "@decipher-sdk/utils";
 import { defaultStackParser } from "../utils/stack_trace/stack-parsers";
 
 const BASE_URL = "https://www.prod.getdecipher.com";

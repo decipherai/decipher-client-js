@@ -1,6 +1,6 @@
 {
   "name": "@decipher-sdk/frontend",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "description": "The official Decipher SDK for your frontend.",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@decipher-sdk/types": "^0.0.1",
+    "@decipher-sdk/utils": "^0.0.1",
     "react": "^18.2.0",
     "rrweb": "^2.0.0-alpha.4",
     "uuid": "^9.0.1"

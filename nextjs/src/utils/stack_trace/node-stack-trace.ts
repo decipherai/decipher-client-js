@@ -2,7 +2,7 @@
 
 import type { StackLineParser, StackLineParserFn, StackParser } from "@decipher-sdk/types";
 import { createGetModuleFromFilename } from "./module";
-import { createStackParser } from "./stacktrace";
+import { createStackParser } from "@decipher-sdk/utils";
 
 export const UNKNOWN_FUNCTION = "?";
 

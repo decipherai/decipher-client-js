@@ -4,8 +4,7 @@ import type { NextApiRequest } from "next";
 import { DecipherHandlerConfig } from "./handler-config";
 import { Exception } from "@decipher-sdk/types";
 import { nodeStackParser } from "./stack_trace/node-stack-trace";
-import { applyDebugIds } from "./event_builder/prepareEvent";
-import { exceptionFromError } from "./event_builder/eventbuilder";
+import { applyDebugIds, exceptionFromError } from "@decipher-sdk/utils";
 
 export type User = {
   id?: number | string;

@@ -1,5 +1,8 @@
+// Forked from https://github.com/getsentry/sentry-javascript/blob/531779300c186f89afff0c5bad9f802b2140a325/packages/core/src/utils/prepareEvent.ts.
+// We use a small subset of that file for now.
+
 import { Exception, StackParser, StackFrame } from "@decipher-sdk/types";
-import { GLOBAL_OBJ } from "../internal-global";
+import { GLOBAL_OBJ } from "./worldwide";
 
 const debugIdStackParserCache = new WeakMap<
   StackParser,

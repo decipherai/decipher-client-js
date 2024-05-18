@@ -6,8 +6,7 @@ import type {
   StackLineParserFn,
 } from "@decipher-sdk/types";
 
-// UNKNOWN_FUNCTION and createStackParser to be moved to @decipher-sdk/utils
-import { UNKNOWN_FUNCTION, createStackParser } from "./stacktrace";
+import { UNKNOWN_FUNCTION, createStackParser } from "@decipher-sdk/utils";
 
 const OPERA10_PRIORITY = 10;
 const OPERA11_PRIORITY = 20;

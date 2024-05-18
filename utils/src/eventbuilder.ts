@@ -31,4 +31,3 @@ export function exceptionFromError(
 
   return exception;
 }
-
