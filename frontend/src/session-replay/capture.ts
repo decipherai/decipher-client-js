@@ -99,6 +99,10 @@ class DecipherRecording {
           this.handleEventBuffering(event);
         },
         plugins: this.plugins,
+        maskInputOptions: {
+          email: true,
+          password: true,
+        },
       }) || undefined;
     this.stopRecording = stopRecording;
 
