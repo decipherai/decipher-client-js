@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@decipher-sdk/types": "^0.0.1",
-    "@decipher-sdk/utils": "^0.0.1",
+    "@decipher-sdk/utils": "^0.0.2",
     "react": "^18.2.0",
     "rrweb": "^2.0.0-alpha.4",
     "uuid": "^9.0.1"

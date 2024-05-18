@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@decipher-sdk/types": "^0.0.1",
-    "@decipher-sdk/utils": "^0.0.1",
+    "@decipher-sdk/utils": "^0.0.2",
     "axios": "^1.6.7",
     "cross-fetch": "^4.0.0",
     "dotenv": "^16.4.5",

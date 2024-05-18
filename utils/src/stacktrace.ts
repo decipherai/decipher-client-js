@@ -1,7 +1,12 @@
-import type { StackFrame, StackLineParser, StackParser } from '@decipher-sdk/types';
+// Forked from https://github.com/getsentry/sentry-javascript/blob/531779300c186f89afff0c5bad9f802b2140a325/packages/utils/src/stacktrace.ts.
+import type {
+  StackFrame,
+  StackLineParser,
+  StackParser,
+} from "@decipher-sdk/types";
 
 const STACKTRACE_FRAME_LIMIT = 50;
-export const UNKNOWN_FUNCTION = '?';
+export const UNKNOWN_FUNCTION = "?";
 // Used to sanitize webpack (error: *) wrapped stack errors
 const WEBPACK_ERROR_REGEXP = /\(error: (.*)\)/;
 const STRIP_FRAME_REGEXP = /captureMessage|captureException/;
@@ -9,16 +14,20 @@ const STRIP_FRAME_REGEXP = /captureMessage|captureException/;
 /**
  * Creates a stack parser with the supplied line parsers
  *
- * StackFrames are returned in the correct order for Sentry Exception
- * frames and with Sentry SDK internal frames removed from the top and bottom
+ * StackFrames are returned in the correct order for Decipher Exception
+ * frames and with Decipher SDK internal frames removed from the top and bottom
  *
  */
 export function createStackParser(...parsers: StackLineParser[]): StackParser {
-  const sortedParsers = parsers.sort((a, b) => a[0] - b[0]).map(p => p[1]);
+  const sortedParsers = parsers.sort((a, b) => a[0] - b[0]).map((p) => p[1]);
 
-  return (stack: string, skipFirstLines: number = 0, framesToPop: number = 0): StackFrame[] => {
+  return (
+    stack: string,
+    skipFirstLines: number = 0,
+    framesToPop: number = 0
+  ): StackFrame[] => {
     const frames: StackFrame[] = [];
-    const lines = stack.split('\n');
+    const lines = stack.split("\n");
 
     for (let i = skipFirstLines; i < lines.length; i++) {
       const line = lines[i];
@@ -32,7 +41,9 @@ export function createStackParser(...parsers: StackLineParser[]): StackParser {
 
       // https://github.com/getsentry/sentry-javascript/issues/5459
       // Remove webpack (error: *) wrappers
-      const cleanedLine = WEBPACK_ERROR_REGEXP.test(line) ? line.replace(WEBPACK_ERROR_REGEXP, '$1') : line;
+      const cleanedLine = WEBPACK_ERROR_REGEXP.test(line)
+        ? line.replace(WEBPACK_ERROR_REGEXP, "$1")
+        : line;
 
       // https://github.com/getsentry/sentry-javascript/issues/7813
       // Skip Error: lines
@@ -54,7 +65,7 @@ export function createStackParser(...parsers: StackLineParser[]): StackParser {
       }
     }
 
-    return stripSentryFramesAndReverse(frames.slice(framesToPop));
+    return stripDecipherFramesAndReverse(frames.slice(framesToPop));
   };
 }
 
@@ -64,7 +75,9 @@ export function createStackParser(...parsers: StackLineParser[]): StackParser {
  *
  * If options contains an array of line parsers, it is converted into a parser
  */
-export function stackParserFromStackParserOptions(stackParser: StackParser | StackLineParser[]): StackParser {
+export function stackParserFromStackParserOptions(
+  stackParser: StackParser | StackLineParser[]
+): StackParser {
   if (Array.isArray(stackParser)) {
     return createStackParser(...stackParser);
   }
@@ -72,12 +85,14 @@ export function stackParserFromStackParserOptions(stackParser: StackParser | Sta
 }
 
 /**
- * Removes Sentry frames from the top and bottom of the stack if present and enforces a limit of max number of frames.
+ * Removes Decipher frames from the top and bottom of the stack if present and enforces a limit of max number of frames.
  * Assumes stack input is ordered from top to bottom and returns the reverse representation so call site of the
  * function that caused the crash is the last frame in the array.
  * @hidden
  */
-export function stripSentryFramesAndReverse(stack: ReadonlyArray<StackFrame>): StackFrame[] {
+export function stripDecipherFramesAndReverse(
+  stack: ReadonlyArray<StackFrame>
+): StackFrame[] {
   if (!stack.length) {
     return [];
   }
@@ -85,7 +100,9 @@ export function stripSentryFramesAndReverse(stack: ReadonlyArray<StackFrame>): S
   const localStack = Array.from(stack);
 
   // If stack starts with one of our API calls, remove it (starts, meaning it's the top of the stack - aka last call)
-  if (/sentryWrapped/.test(localStack[localStack.length - 1].function || '')) {
+  if (
+    /decipherWrapped/.test(localStack[localStack.length - 1].function || "")
+  ) {
     localStack.pop();
   }
 
@@ -93,37 +110,40 @@ export function stripSentryFramesAndReverse(stack: ReadonlyArray<StackFrame>): S
   localStack.reverse();
 
   // If stack ends with one of our internal API calls, remove it (ends, meaning it's the bottom of the stack - aka top-most call)
-  if (STRIP_FRAME_REGEXP.test(localStack[localStack.length - 1].function || '')) {
+  if (
+    STRIP_FRAME_REGEXP.test(localStack[localStack.length - 1].function || "")
+  ) {
     localStack.pop();
 
-    // When using synthetic events, we will have a 2 levels deep stack, as `new Error('Sentry syntheticException')`
+    // When using synthetic events, we will have a 2 levels deep stack, as `new Error('Decipher syntheticException')`
     // is produced within the hub itself, making it:
     //
-    //   Sentry.captureException()
-    //   getCurrentHub().captureException()
+    //   Decipher.captureError()
     //
-    // instead of just the top `Sentry` call itself.
+    // instead of just the top `Decipher` call itself.
     // This forces us to possibly strip an additional frame in the exact same was as above.
-    if (STRIP_FRAME_REGEXP.test(localStack[localStack.length - 1].function || '')) {
+    if (
+      STRIP_FRAME_REGEXP.test(localStack[localStack.length - 1].function || "")
+    ) {
       localStack.pop();
     }
   }
 
-  return localStack.slice(0, STACKTRACE_FRAME_LIMIT).map(frame => ({
+  return localStack.slice(0, STACKTRACE_FRAME_LIMIT).map((frame) => ({
     ...frame,
     filename: frame.filename || localStack[localStack.length - 1].filename,
     function: frame.function || UNKNOWN_FUNCTION,
   }));
 }
 
-const defaultFunctionName = '<anonymous>';
+const defaultFunctionName = "<anonymous>";
 
 /**
  * Safely extract function name from itself
  */
 export function getFunctionName(fn: unknown): string {
   try {
-    if (!fn || typeof fn !== 'function') {
+    if (!fn || typeof fn !== "function") {
       return defaultFunctionName;
     }
     return fn.name || defaultFunctionName;
