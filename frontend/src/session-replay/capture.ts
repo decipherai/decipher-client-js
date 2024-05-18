@@ -7,6 +7,10 @@ import {
   RecordPlugin,
 } from "@rrweb/types";
 import { DecipherFrontendConfig, User } from "../types/decipher-types";
+import { Exception } from "@decipher-sdk/types";
+import { exceptionFromError } from "../utils/event_builder/eventbuilder";
+import { applyDebugIds } from "../utils/event_builder/prepareEvent";
+import { defaultStackParser } from "../utils/stack_trace/stack-parsers";
 
 const BASE_URL = "https://www.prod.getdecipher.com";
 const RECORDING_BUFFER_TIMEOUT = 7000;
@@ -56,6 +60,14 @@ function promiseRejectionToErrorProperties(
     res.error = error;
   }
   return res;
+}
+
+function createFilledExceptionObject(error: Error): Exception {
+  const exception: Exception = exceptionFromError(defaultStackParser, error);
+  if (exception.stacktrace?.frames?.length) {
+    applyDebugIds(exception, defaultStackParser);
+  }
+  return exception;
 }
 
 class DecipherRecording {
@@ -143,10 +155,11 @@ class DecipherRecording {
     colno,
     error,
   }: ErrorEvent) {
-    rrweb.record.addCustomEvent("uncaught-error", {
+    const customEvent = {
       message,
-      stackTraceString: JSON.stringify(error?.stack || ""),
-    });
+      exception: error ? createFilledExceptionObject(error) : {},
+    };
+    rrweb.record.addCustomEvent("uncaught-error", customEvent);
   }
 
   private flushBuffer() {
