@@ -1,7 +1,6 @@
 // This code is from https://github.com/getsentry/sentry-javascript/blob/531779300c186f89afff0c5bad9f802b2140a325/packages/utils/src/eventbuilder.ts
 // We use a small subset of that file for now.
-import { Exception } from "../types";
-import { StackParser, StackFrame } from "../stack_trace/types";
+import { Exception, StackParser, StackFrame } from "@decipher-sdk/types";
 
 /**
  * Extracts stack frames from the error.stack string

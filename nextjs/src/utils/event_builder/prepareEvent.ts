@@ -1,6 +1,5 @@
-import { StackParser, StackFrame } from "../stack_trace/types";
+import { Exception, StackParser, StackFrame } from "@decipher-sdk/types";
 import { GLOBAL_OBJ } from "../internal-global";
-import { Exception } from "../types";
 
 const debugIdStackParserCache = new WeakMap<
   StackParser,

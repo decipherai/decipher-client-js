@@ -1,5 +1,5 @@
 // Forked from https://github.com/getsentry/sentry-javascript/blob/531779300c186f89afff0c5bad9f802b2140a325/packages/utils/src/stacktrace.ts.
-import type { StackFrame, StackLineParser, StackParser } from './types';
+import type { StackFrame, StackLineParser, StackParser } from '@decipher-sdk/types';
 
 const STACKTRACE_FRAME_LIMIT = 50;
 export const UNKNOWN_FUNCTION = '?';

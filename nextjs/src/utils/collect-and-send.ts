@@ -2,7 +2,7 @@ import axios from "axios";
 
 import type { NextApiRequest } from "next";
 import { DecipherHandlerConfig } from "./handler-config";
-import { Exception } from "./types";
+import { Exception } from "@decipher-sdk/types";
 import { nodeStackParser } from "./stack_trace/node-stack-trace";
 import { applyDebugIds } from "./event_builder/prepareEvent";
 import { exceptionFromError } from "./event_builder/eventbuilder";

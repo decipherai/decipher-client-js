@@ -1,6 +1,6 @@
 // Forked and modified from https://github.com/getsentry/sentry-javascript/blob/531779300c186f89afff0c5bad9f802b2140a325/packages/utils/src/node-stack-trace.ts
 
-import type { StackLineParser, StackLineParserFn, StackParser } from "./types";
+import type { StackLineParser, StackLineParserFn, StackParser } from "@decipher-sdk/types";
 import { createGetModuleFromFilename } from "./module";
 import { createStackParser } from "./stacktrace";
 
