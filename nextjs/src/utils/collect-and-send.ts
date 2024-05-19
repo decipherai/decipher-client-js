@@ -5,6 +5,7 @@ import { DecipherHandlerConfig } from "./handler-config";
 import { Exception } from "@decipher-sdk/types";
 import { nodeStackParser } from "./stack_trace/node-stack-trace";
 import { applyDebugIds, exceptionFromError } from "@decipher-sdk/utils";
+import { devErrorSymbolicationEventProcessor } from "./stack_trace/devErrorStackParser";
 
 export type User = {
   id?: number | string;
@@ -38,8 +39,14 @@ interface CollectAndSendData {
   endUser?: User | null;
 }
 
-function createFilledExceptionObject(error: Error): Exception {
-  const exception: Exception = exceptionFromError(nodeStackParser, error);
+async function createFilledExceptionObject(error: Error): Promise<Exception> {
+  var exception: Exception = exceptionFromError(nodeStackParser, error);
+  if (process.env.NODE_ENV === "development") {
+    const result = await devErrorSymbolicationEventProcessor(exception, error);
+    if (result) {
+      exception = result;
+    }
+  }
   if (exception.stacktrace?.frames?.length) {
     applyDebugIds(exception, nodeStackParser);
   }
@@ -57,7 +64,7 @@ export async function collectAndSend(
       !!data.config.excludeRequestBody
     );
     const exception = data.error
-      ? createFilledExceptionObject(data.error)
+      ? await createFilledExceptionObject(data.error)
       : null;
     sendErrorToService(
       data.error?.stack || "",
@@ -84,7 +91,7 @@ export async function collectAndSendTrpc(opts: any, data: CollectAndSendData) {
     const errorTimestamp = new Date().toISOString();
     const parsedData = await extractTrpcRequestData(opts);
     const exception = data.error
-      ? createFilledExceptionObject(data.error)
+      ? await createFilledExceptionObject(data.error)
       : null;
 
     // Non-200s get logged; uncaught exceptions are caught below (in the `catch` block)
