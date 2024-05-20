@@ -1,6 +1,6 @@
 {
   "name": "@decipher-sdk/frontend",
-  "version": "0.0.18",
+  "version": "0.0.20",
   "description": "The official Decipher SDK for your frontend.",
   "main": "dist/index.js",
   "module": "dist/esm/index.js",
@@ -10,9 +10,10 @@
       "import": "./dist/esm/index.js"
     }
   },
+  "type": "module",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc && tsc --module ES6 --outDir dist/esm",
+    "build": "tsc",
     "postinstall": "npm run build",
     "prepublish": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"

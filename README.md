@@ -10,10 +10,10 @@
 
 ### AI-Powered Error Monitoring and Debugging
 
-[![Docs](https://img.shields.io/badge/docs-prod.getdecipher.com/docs-3F16E4)](https://prod.getdecipher.com/docs) [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
+[![Docs](https://img.shields.io/badge/docs-docs.getdecipher.com-3F16E4)](https://docs.getdecipher.com) [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 
   <p align="center">
-    <a href="https://prod.getdecipher.com/docs">Documentation</a>
+    <a href="https://docs.getdecipher.com">Documentation</a>
     ·
     <a href="https://getdecipher.com">Website</a>
   </p>
@@ -22,7 +22,7 @@
 
 ## Docs
 
-To integrate Decipher into your Next.js or Express application, please follow the steps at https://prod.getdecipher.com/docs
+To integrate Decipher into your Next.js or Express application, please follow the steps at https://docs.getdecipher.com
 
 ## Examples
 

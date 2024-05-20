@@ -147,6 +147,6 @@ function processLog(logData: LogData) {
 
 export { asyncLocalStorage };
 
-// Exports a singleton instance of the Decipher class
+// Exports a singleton instance of the Decipher class (for server/edge)
 export default Decipher.getInstance();
 export { withDecipherConfig } from "./config/withDecipherConfig";

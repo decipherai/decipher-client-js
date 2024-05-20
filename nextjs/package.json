@@ -1,10 +1,13 @@
 {
   "name": "@decipher-sdk/nextjs",
-  "version": "0.1.44",
+  "version": "0.2.1",
   "description": "Official Decipher SDK for Nextjs",
   "main": "dist/decipher.js",
   "exports": {
-    ".": "./dist/decipher.js"
+    ".": {
+      "browser": "./dist/decipher.client.js",
+      "default": "./dist/decipher.js"
+    }
   },
   "scripts": {
     "build": "tsc",
@@ -26,6 +29,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@decipher-sdk/frontend": "^0.0.20",
     "@decipher-sdk/types": "^0.0.1",
     "@decipher-sdk/utils": "^0.0.2",
     "axios": "^1.6.7",
