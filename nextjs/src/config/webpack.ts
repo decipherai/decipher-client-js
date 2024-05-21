@@ -239,17 +239,17 @@ function maybeCreateDecipherClientConfigFile(
   }
   const configFilePath = path.resolve(projectDir, "decipher.client.config.ts");
 
-  if (!fs.existsSync(configFilePath)) {
-    const configContent = `import * as DecipherClient from "@decipher-sdk/nextjs";
+  const configContent = `/** DO NOT MODIFY THIS FILE! Update your next.config.[m]js instead */
+import * as DecipherClient from "@decipher-sdk/nextjs";
 
 DecipherClient.init({
   customerId: "${decipherBuildOptions.customerId}",
-  frontendCodebaseId: "${decipherBuildOptions.frontendCodebaseId}",
+  frontendCodebaseId: "${frontendCodebaseId}",
 });
 `;
-    fs.writeFileSync(configFilePath, configContent, { encoding: "utf8" });
-  }
+  fs.writeFileSync(configFilePath, configContent, { encoding: "utf8" });
 }
+
 /**
  * Searches for a `decipher.client.config.ts|js` file and returns its file name if it finds one. (ts being prioritized)
  *
