@@ -104,14 +104,14 @@ export function createDebugIdUploadFunction({
         }
         await Promise.all(workers);
 
-        const files = await fs.promises.readdir(tmpUploadFolder);
-        const stats = files.map((file) =>
-          fs.promises.stat(path.join(tmpUploadFolder, file))
-        );
-        const uploadSize = (await Promise.all(stats)).reduce(
-          (accumulator, { size }) => accumulator + size,
-          0
-        );
+        // const files = await fs.promises.readdir(tmpUploadFolder);
+        // const stats = files.map((file) =>
+        //   fs.promises.stat(path.join(tmpUploadFolder, file))
+        // );
+        // const uploadSize = (await Promise.all(stats)).reduce(
+        //   (accumulator, { size }) => accumulator + size,
+        //   0
+        // );
         await validateAndUploadSourcemaps(apiKey, tmpUploadFolder);
 
         logger.info(
