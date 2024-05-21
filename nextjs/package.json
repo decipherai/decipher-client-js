@@ -1,6 +1,6 @@
 {
   "name": "@decipher-sdk/nextjs",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Official Decipher SDK for Nextjs",
   "main": "dist/index.server.js",
   "types": "dist/index.types.d.ts",
@@ -34,7 +34,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@decipher-sdk/frontend": "^0.0.20",
+    "@decipher-sdk/frontend": "^0.0.21",
     "@decipher-sdk/types": "^0.0.1",
     "@decipher-sdk/utils": "^0.0.2",
     "axios": "^1.6.7",

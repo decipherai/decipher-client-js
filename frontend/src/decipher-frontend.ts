@@ -15,7 +15,7 @@ const DecipherFrontend = {
       );
       return;
     }
-    const { customerId, codebaseId, user } = config;
+    const { customerId, codebaseId, user, exceptionAnnotator } = config;
     if (!customerId || !codebaseId) {
       console.error(
         "[Decipher] DecipherFrontendConfig requires both customerId and codebaseId"
@@ -28,6 +28,7 @@ const DecipherFrontend = {
         customerId,
         codebaseId,
         user,
+        exceptionAnnotator,
       });
       const stopRecording = decipherRecording.startRecording();
 

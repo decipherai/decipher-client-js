@@ -11,7 +11,7 @@
     "declarationMap": true,
     "strictBindCallApply": true,
     "skipLibCheck": true,
-    "allowJs": true,
+    "allowJs": true
   },
   "type": "module",
   "include": ["src/**/*"],

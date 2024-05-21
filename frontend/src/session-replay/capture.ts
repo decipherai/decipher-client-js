@@ -75,14 +75,25 @@ class DecipherRecording {
   private sessionId: string = "";
   private customerId: DecipherFrontendConfig["customerId"];
   private codebaseId: DecipherFrontendConfig["codebaseId"];
+  private exceptionAnnotator:
+    | DecipherFrontendConfig["exceptionAnnotator"]
+    | undefined;
   private user: User | undefined;
   private plugins: RecordPlugin[];
   private stopRecording: listenerHandler | undefined;
   private isStopped: boolean = false;
 
-  constructor({ customerId, codebaseId, user }: DecipherFrontendConfig) {
+  constructor({
+    customerId,
+    codebaseId,
+    user,
+    exceptionAnnotator,
+  }: DecipherFrontendConfig) {
     this.customerId = customerId;
     this.codebaseId = codebaseId;
+    if (exceptionAnnotator) {
+      this.exceptionAnnotator = exceptionAnnotator;
+    }
     this.user = undefined;
     if (user && (user.email || user.id !== 0 || user.username)) {
       this.user = user;
@@ -154,11 +165,27 @@ class DecipherRecording {
     colno,
     error,
   }: ErrorEvent) {
-    const customEvent = {
-      message,
-      exception: error ? createFilledExceptionObject(error) : {},
-    };
-    rrweb.record.addCustomEvent("uncaught-error", customEvent);
+    var exception = error ? createFilledExceptionObject(error) : {};
+    // Currently only passed by the NextJS SDK to annotate errors with detailed stack trace info.
+    if (this.exceptionAnnotator && error) {
+      this.exceptionAnnotator(exception, error).then((result) => {
+        if (result) {
+          exception = result;
+        }
+        const customEvent = {
+          message,
+          exception,
+        };
+        rrweb.record.addCustomEvent("uncaught-error", customEvent);
+      });
+    } else {
+      // Normal production path.
+      const customEvent = {
+        message,
+        exception,
+      };
+      rrweb.record.addCustomEvent("uncaught-error", customEvent);
+    }
   }
 
   private flushBuffer() {

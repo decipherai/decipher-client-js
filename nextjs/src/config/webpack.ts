@@ -230,15 +230,21 @@ function maybeCreateDecipherClientConfigFile(
   projectDir: string,
   decipherBuildOptions: DecipherBuildOptions
 ): void {
+  const { customerId, frontendCodebaseId } = decipherBuildOptions;
+  if (!customerId || !frontendCodebaseId) {
+    console.error(
+      "[Decipher] Please set both customerId AND frontendCodebaseId in the call to withDecipherConfig."
+    );
+    return;
+  }
   const configFilePath = path.resolve(projectDir, "decipher.client.config.ts");
 
   if (!fs.existsSync(configFilePath)) {
-    const configContent = 
-`import { DecipherFrontend } from "@decipher-sdk/nextjs";
+    const configContent = `import * as DecipherClient from "@decipher-sdk/nextjs";
 
-DecipherFrontend.init({
+DecipherClient.init({
   customerId: "${decipherBuildOptions.customerId}",
-  codebaseId: "${decipherBuildOptions.frontendCodebaseId}",
+  frontendCodebaseId: "${decipherBuildOptions.frontendCodebaseId}",
 });
 `;
     fs.writeFileSync(configFilePath, configContent, { encoding: "utf8" });
