@@ -4,6 +4,8 @@ import type { DefinePlugin, WebpackPluginInstance } from 'webpack';
 
 export type DecipherBuildOptions = {
     apiKey: string,
+    customerId: string,
+    frontendCodebaseId: string,
 }
 
 // Export this from here because importing something from Webpack (the library) in `webpack.ts` confuses the heck out of

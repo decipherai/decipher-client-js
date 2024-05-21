@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { NextRequest } from "next/server";
 import { collectAndSend, collectAndSendTrpc } from "./utils/collect-and-send";
 import { DecipherHandlerConfig } from "./utils/handler-config";
-import Decipher from "./decipher";
+import Decipher from "./index.server";
 import { v4 as uuidv4 } from "uuid";
 
 import type {

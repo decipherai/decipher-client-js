@@ -1,12 +1,17 @@
 {
   "name": "@decipher-sdk/nextjs",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Official Decipher SDK for Nextjs",
-  "main": "dist/decipher.js",
+  "main": "dist/index.server.js",
+  "types": "dist/index.types.d.ts",
   "exports": {
+    "./package.json": "./package.json",
     ".": {
-      "browser": "./dist/decipher.client.js",
-      "default": "./dist/decipher.js"
+      "browser": "./dist/index.client.js",
+      "edge": "./dist/index.client.js",
+      "edge-light": "./dist/index.client.js",
+      "node": "./dist/index.server.js",
+      "types": "./dist/index.types.d.ts"
     }
   },
   "scripts": {

@@ -83,7 +83,11 @@ export function constructWebpackConfigFunction(
       // be fixed by using `bind`, but this is way simpler.)
       const origEntryProperty = newConfig.entry;
       newConfig.entry = async () =>
-        addDecipherToClientEntryProperty(origEntryProperty, buildContext);
+        addDecipherToClientEntryProperty(
+          origEntryProperty,
+          buildContext,
+          decipherBuildOptions
+        );
     }
 
     return newConfig;
@@ -101,7 +105,8 @@ export function constructWebpackConfigFunction(
  */
 async function addDecipherToClientEntryProperty(
   currentEntryProperty: WebpackEntryProperty,
-  buildContext: BuildContext
+  buildContext: BuildContext,
+  decipherBuildOptions: DecipherBuildOptions
 ): Promise<EntryPropertyObject> {
   // The `entry` entry in a webpack config can be a string, array of strings, object, or function. By default, nextjs
   // sets it to an async function which returns the promise of an object of string arrays. Because we don't know whether
@@ -115,6 +120,8 @@ async function addDecipherToClientEntryProperty(
     typeof currentEntryProperty === "function"
       ? await currentEntryProperty()
       : { ...currentEntryProperty };
+
+  maybeCreateDecipherClientConfigFile(projectDir, decipherBuildOptions);
 
   const clientDecipherConfigFileName = getClientDecipherConfigFile(projectDir);
 
@@ -219,6 +226,24 @@ function addFilesToWebpackEntryPoint(
   entryProperty[entryPointName] = newEntryPoint;
 }
 
+function maybeCreateDecipherClientConfigFile(
+  projectDir: string,
+  decipherBuildOptions: DecipherBuildOptions
+): void {
+  const configFilePath = path.resolve(projectDir, "decipher.client.config.ts");
+
+  if (!fs.existsSync(configFilePath)) {
+    const configContent = 
+`import { DecipherFrontend } from "@decipher-sdk/nextjs";
+
+DecipherFrontend.init({
+  customerId: "${decipherBuildOptions.customerId}",
+  codebaseId: "${decipherBuildOptions.frontendCodebaseId}",
+});
+`;
+    fs.writeFileSync(configFilePath, configContent, { encoding: "utf8" });
+  }
+}
 /**
  * Searches for a `decipher.client.config.ts|js` file and returns its file name if it finds one. (ts being prioritized)
  *
