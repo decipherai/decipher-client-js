@@ -22,8 +22,8 @@ export interface DecipherContext {
 }
 
 // Singleton class to manage Decipher configurations and context
-class Decipher {
-  private static instance: Decipher;
+class DecipherSingleton {
+  private static instance: DecipherSingleton;
   private _isProcessingLog: boolean = false;
 
   public settings: DecipherHandlerConfig = {
@@ -34,11 +34,11 @@ class Decipher {
   private constructor() {}
 
   // Ensures a single instance of the Decipher class
-  public static getInstance(): Decipher {
-    if (!Decipher.instance) {
-      Decipher.instance = new Decipher();
+  public static getInstance(): DecipherSingleton {
+    if (!DecipherSingleton.instance) {
+      DecipherSingleton.instance = new DecipherSingleton();
     }
-    return Decipher.instance;
+    return DecipherSingleton.instance;
   }
 
   public init(config: DecipherHandlerConfig): void {
@@ -127,11 +127,11 @@ class Decipher {
 function processLog(logData: LogData) {
   try {
     const timestamp = new Date().toISOString();
-    const context = Decipher.getInstance().getCurrentContext();
+    const context = DecipherSingleton.getInstance().getCurrentContext();
     if (context) {
       const message = logData.payload.join(" ");
       const level = logData.level;
-      Decipher.getInstance().updateContext(
+      DecipherSingleton.getInstance().updateContext(
         {
           consoleMessages: [
             ...context.consoleMessages,
@@ -148,5 +148,7 @@ function processLog(logData: LogData) {
 export { asyncLocalStorage };
 
 // Exports a singleton instance of the Decipher class (for server/edge)
-export default Decipher.getInstance();
+export default DecipherSingleton.getInstance();
+const Decipher = DecipherSingleton.getInstance();
+export { Decipher };
 export { withDecipherConfig } from "./config/withDecipherConfig";

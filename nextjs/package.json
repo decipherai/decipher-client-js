@@ -1,6 +1,6 @@
 {
   "name": "@decipher-sdk/nextjs",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Official Decipher SDK for Nextjs",
   "main": "dist/index.server.js",
   "types": "dist/index.types.d.ts",
