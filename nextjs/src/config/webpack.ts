@@ -247,9 +247,18 @@ DecipherClient.init({
   frontendCodebaseId: "${frontendCodebaseId}",
 });
 `;
-  fs.writeFileSync(configFilePath, configContent, { encoding: "utf8" });
-}
 
+  try {
+    if (
+      !fs.existsSync(configFilePath) ||
+      fs.readFileSync(configFilePath, "utf8") !== configContent
+    ) {
+      fs.writeFileSync(configFilePath, configContent, { encoding: "utf8" });
+    }
+  } catch (error) {
+    console.error("[Decipher] Error handling config file:", error);
+  }
+}
 /**
  * Searches for a `decipher.client.config.ts|js` file and returns its file name if it finds one. (ts being prioritized)
  *
