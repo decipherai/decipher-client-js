@@ -60,7 +60,13 @@ async function resolveStackFrame(
           3004,
           3005,
           5000,
+          5001,
+          5002,
+          5003,
           8000,
+          8001,
+          8002,
+          8003,
         ];
 
     for (const port of portsToTry) {
