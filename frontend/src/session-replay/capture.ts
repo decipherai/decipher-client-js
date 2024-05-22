@@ -1,6 +1,6 @@
 "use client";
 import * as rrweb from "rrweb";
-import { v4 as uuidv4 } from "uuid";
+import { uuid4 } from "../utils/uuid";
 import {
   type eventWithTime,
   type listenerHandler,
@@ -113,7 +113,7 @@ class DecipherRecording {
   }
 
   public startRecording(): listenerHandler | undefined {
-    this.sessionId = uuidv4();
+    this.sessionId = uuid4();
     this.buffer = { data: [] };
     const stopRecording =
       rrweb.record({
