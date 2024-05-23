@@ -60,7 +60,7 @@ export async function validateAndUploadSourcemaps(
           "X-Timestamp": timestamp,
         },
         body: fileContent,
-      });
+      }).catch(() => {});
     }
   } catch (error) {
     console.error(
