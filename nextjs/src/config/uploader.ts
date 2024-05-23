@@ -47,12 +47,11 @@ export async function validateAndUploadSourcemaps(
       }
       return a.localeCompare(b);
     });
-
     const timestamp = new Date().toISOString();
     for (const file of sortedFiles) {
       const filePath = join(path, file);
       const fileContent = await readFile(filePath);
-      const uploadResponse = await fetch(`${serverUrl}/api/upload_sourcemap`, {
+      fetch(`${serverUrl}/api/upload_sourcemap`, {
         method: "POST",
         headers: {
           "Content-Type": "application/octet-stream",
@@ -62,12 +61,11 @@ export async function validateAndUploadSourcemaps(
         },
         body: fileContent,
       });
-      if (!uploadResponse.ok) {
-        console.error(`[Decipher] Failed to upload ${file}. Response:`);
-        console.error(uploadResponse);
-      }
     }
   } catch (error) {
-    console.error("[Decipher] An error occurred during sourcmap upload:", error);
+    console.error(
+      "[Decipher] An error occurred during sourcmap upload:",
+      error
+    );
   }
 }
