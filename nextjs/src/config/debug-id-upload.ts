@@ -113,10 +113,6 @@ export function createDebugIdUploadFunction({
         //   0
         // );
         await validateAndUploadSourcemaps(apiKey, tmpUploadFolder);
-
-        logger.info(
-          `Successfully uploaded sourcemaps to Decipher.`
-        );
       }
 
       if (filesToDeleteAfterUpload) {

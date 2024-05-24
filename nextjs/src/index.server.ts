@@ -151,4 +151,5 @@ export { asyncLocalStorage };
 export default DecipherSingleton.getInstance();
 const Decipher = DecipherSingleton.getInstance();
 export { Decipher };
+export { decipherTrpcMiddleware } from "./trpc";
 export { withDecipherConfig } from "./config/withDecipherConfig";

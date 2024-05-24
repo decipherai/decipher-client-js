@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { NextRequest } from "next/server";
-import { collectAndSend, collectAndSendTrpc } from "./utils/collect-and-send";
+import { collectAndSend } from "./utils/collect-and-send";
 import { DecipherHandlerConfig } from "./utils/handler-config";
 import Decipher from "./index.server";
 import { v4 as uuidv4 } from "uuid";
@@ -235,85 +235,3 @@ export function wrapPageRouter<T>(
     );
   };
 }
-
-export function decipherTrpcMiddleware(config: DecipherHandlerConfig) {
-  return async (opts: any) => {
-    let handlerInvoked = false;
-    let result: any;
-    const filledConfig = {
-      ...config,
-      excludeRequestBody: !!config.excludeRequestBody,
-      environment: config.environment || "production",
-    };
-    try {
-      return await Decipher.runWithContext(
-        {
-          opts: opts,
-          consoleMessages: [],
-          config: filledConfig,
-          requestId: uuidv4(),
-        },
-        async () => {
-          try {
-            const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-
-            // Proceed with the next middleware or the actual procedure
-            result = await opts.next();
-
-            if (!result.ok && result.error instanceof Error) {
-              collectAndSendTrpc(opts, {
-                respBody: {},
-                statusCode: 500,
-                messages: currentContext?.consoleMessages || [],
-                isUncaughtException: true,
-                config: filledConfig,
-                error: result.error,
-              });
-            }
-            return result;
-          } catch (error) {
-            if (!handlerInvoked) {
-              // Caught an error in Decipher's logic BEFORE handler invocation above. The handler won't throw an error
-              // if it was an invoked given tRPC's error-handling mechanism.
-              return await opts.next();
-            } else {
-              // Caught an error in Decipher's logic AFTER handler invocation above. The handler won't throw an error
-              // if it was an invoked given tRPC's error-handling mechanism.
-              return result;
-            }
-          } finally {
-          }
-        }
-      );
-    } catch {
-      return new Response();
-    }
-  };
-}
-
-// export function handleCaptureError() {
-//   const currentContext = Decipher.getCurrentContext(); // Retrieve the current context
-//   // TRPC case
-//   if (currentContext?.opts) {
-//     collectAndSendTrpc(currentContext?.opts, {
-//       respBody: {},
-//       messages: currentContext?.consoleMessages || [],
-//       isUncaughtException: false,
-//       config: currentContext?.config,
-//       error: currentContext?.capturedError,
-//       endUser: currentContext?.endUser,
-//     });
-//   }
-
-//   // Non TRPC
-//   else if (currentContext?.capturedError && currentContext.request) {
-//     collectAndSend(currentContext.request, {
-//       respBody: {},
-//       messages: currentContext.consoleMessages || [],
-//       isUncaughtException: false,
-//       config: currentContext.config,
-//       error: currentContext.capturedError,
-//       endUser: currentContext?.endUser,
-//     });
-//   }
-// }

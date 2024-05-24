@@ -6,6 +6,7 @@ import { Exception } from "@decipher-sdk/types";
 import { nodeStackParser } from "./stack_trace/node-stack-trace";
 import { applyDebugIds, exceptionFromError } from "@decipher-sdk/utils";
 import { devErrorSymbolicationEventProcessor } from "./stack_trace/devErrorStackParser";
+import { DecipherTrpcMiddlewareArguments } from "../types";
 
 export type User = {
   id?: number | string;
@@ -86,33 +87,37 @@ export async function collectAndSend(
   }
 }
 
-export async function collectAndSendTrpc(opts: any, data: CollectAndSendData) {
+export function collectAndSendTrpc<T>(
+  opts: DecipherTrpcMiddlewareArguments<T>,
+  data: CollectAndSendData,
+  path: string
+) {
   try {
     const errorTimestamp = new Date().toISOString();
-    const parsedData = await extractTrpcRequestData(opts);
-    const exception = data.error
-      ? await createFilledExceptionObject(data.error)
-      : null;
+    extractTrpcRequestData(opts).then((_parsedData) => {
+      const exceptionPromise = data.error
+        ? createFilledExceptionObject(data.error)
+        : Promise.resolve(null);
 
-    // Non-200s get logged; uncaught exceptions are caught below (in the `catch` block)
-    sendErrorToService(
-      data.error?.stack || "",
-      exception,
-      errorTimestamp,
-      parsedData.url,
-      parsedData.endpoint,
-      parsedData.headers,
-      parsedData.body,
-      data.respBody,
-      data.statusCode || 0,
-      data.messages,
-      data.isUncaughtException,
-      data.config,
-      data.endUser
-    );
-  } catch (error) {
-    //console.error("Failure sending to Decipher for Trpc", error);
-  }
+      exceptionPromise.then((exception) => {
+        sendErrorToService(
+          data.error?.stack || "",
+          exception,
+          errorTimestamp,
+          path,
+          path, // parsedData.endpoint,
+          {}, // parsedData.headers,
+          "", // parsedData.body,
+          data.respBody,
+          data.statusCode || 0,
+          data.messages,
+          data.isUncaughtException,
+          data.config,
+          data.endUser
+        );
+      });
+    });
+  } catch (error) {}
 }
 
 async function extractRequestData(
