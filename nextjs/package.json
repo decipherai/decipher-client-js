@@ -1,6 +1,6 @@
 {
   "name": "@decipher-sdk/nextjs",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "description": "Official Decipher SDK for Nextjs",
   "main": "dist/index.server.js",
   "types": "dist/index.types.d.ts",
@@ -20,7 +20,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Decipher AI",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.27",

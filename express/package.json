@@ -1,6 +1,6 @@
 {
     "name": "@decipher-sdk/express",
-    "version": "0.1.31",
+    "version": "0.1.32",
     "description": "Official Decipher SDK for Express",
     "main": "dist/decipher-error-handler.js",
     "exports": {
@@ -16,7 +16,7 @@
         "lint:fix": "prettier . --write"
     },
     "author": "Decipher AI",
-    "license": "UNLICENSED",
+    "license": "MIT",
     "devDependencies": {
         "@types/express": "^4.17.21",
         "@types/jest": "^29.5.12",

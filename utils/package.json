@@ -1,6 +1,6 @@
 {
   "name": "@decipher-sdk/utils",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Utilities for Decipher TypeScript SDKs",
   "main": "dist/index.js",
   "exports": {
@@ -13,7 +13,7 @@
   },
   "keywords": [],
   "author": "Decipher AI",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^20.12.12",
     "typescript": "^5.4.5"
