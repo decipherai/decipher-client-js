@@ -1,0 +1,1 @@
+export { withDecipherConfig } from "./withDecipherConfig";

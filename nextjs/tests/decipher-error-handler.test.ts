@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { NextApiRequest, NextApiResponse } from "next";
-import { collectAndSend } from "../utils/collect-and-send";
-import Decipher from "../index.server";
+import { collectAndSend } from "../src/server/collect-and-send";
+import { Decipher } from "../src/server";
 import { createMocks } from "node-mocks-http";
 
 jest.mock("../utils/collect-and-send", () => ({

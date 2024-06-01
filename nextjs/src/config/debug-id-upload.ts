@@ -5,7 +5,7 @@ import { glob } from "glob";
 import os from "os";
 import path from "path";
 import * as util from "util";
-import { Logger } from "../utils/logger";
+import { Logger } from "./logger";
 import { promisify } from "util";
 import { validateAndUploadSourcemaps } from "./uploader";
 interface RewriteSourcesHook {

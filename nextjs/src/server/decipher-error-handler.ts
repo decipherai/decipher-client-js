@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { NextRequest } from "next/server";
-import { collectAndSend } from "./utils/collect-and-send";
-import { DecipherHandlerConfig } from "./utils/handler-config";
-import Decipher from "./index.server";
+import { collectAndSend } from "./collect-and-send";
+import { DecipherHandlerConfig } from "./handler-config";
 import { v4 as uuidv4 } from "uuid";
 
 import type {
@@ -21,12 +20,13 @@ export function wrapAppRouter(
   handler: AppRouterRequestHandler | AppRouterNextRequestHandler,
   config: DecipherHandlerConfig
 ): typeof handler {
-  const filledConfig = {
-    ...Decipher.settings,
-    excludeRequestBody: !!config.excludeRequestBody,
-    environment: config.environment || "production",
-  };
   return async (request: Request | NextRequest) => {
+    const { Decipher } = await import("./decipher-singleton");
+    const filledConfig = {
+      ...Decipher.settings,
+      excludeRequestBody: !!config.excludeRequestBody,
+      environment: config.environment || "production",
+    };
     let decipherRequest = request;
     let handlerInvoked = false;
 
@@ -132,13 +132,13 @@ export function wrapPageRouter<T>(
   handler: PageRouterHandler<T>,
   config: DecipherHandlerConfig
 ): PageRouterHandler<T> {
-  const filledConfig = {
-    ...Decipher.settings,
-    excludeRequestBody: !!config.excludeRequestBody,
-    environment: config.environment || "production",
-  };
-
   return async (req: NextApiRequest, res: NextApiResponse<T>) => {
+    const { Decipher } = await import("./decipher-singleton");
+    const filledConfig = {
+      ...Decipher.settings,
+      excludeRequestBody: !!config.excludeRequestBody,
+      environment: config.environment || "production",
+    };
     let handlerInvoked = false;
     let responseStatus: number = 200; // Default to 200, will be updated with actual response status
     let responseBody: any;

@@ -3,10 +3,10 @@ import axios from "axios";
 import type { NextApiRequest } from "next";
 import { DecipherHandlerConfig } from "./handler-config";
 import { Exception } from "@decipher-sdk/types";
-import { nodeStackParser } from "./stack_trace/node-stack-trace";
+import { nodeStackParser } from "./node-stack-trace";
 import { applyDebugIds, exceptionFromError } from "@decipher-sdk/utils";
-import { devErrorSymbolicationEventProcessor } from "./stack_trace/devErrorStackParser";
-import { DecipherTrpcMiddlewareArguments } from "../types";
+import { devErrorSymbolicationEventProcessor } from "../client/devErrorStackParser";
+import { DecipherTrpcMiddlewareArguments } from "./types";
 
 export type User = {
   id?: number | string;

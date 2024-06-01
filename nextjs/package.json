@@ -1,54 +1,114 @@
 {
   "name": "@decipher-sdk/nextjs",
-  "version": "0.2.13",
+  "version": "0.2.15",
   "description": "Official Decipher SDK for Nextjs",
-  "main": "dist/index.server.js",
-  "types": "dist/index.types.d.ts",
+  "author": "Decipher AI",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.18"
+  },
+  "main": "build/cjs/index.server.js",
+  "module": "build/esm/index.server.js",
+  "types": "build/types/index.types.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "browser": "./dist/index.client.js",
-      "edge": "./dist/index.client.js",
-      "edge-light": "./dist/index.client.js",
-      "node": "./dist/index.server.js",
-      "types": "./dist/index.types.d.ts"
+      "browser": {
+        "import": "./build/esm/index.client.js",
+        "require": "./build/cjs/index.client.js"
+      },
+      "node": "./build/cjs/index.server.js",
+      "import": "./build/esm/index.server.js",
+      "types": "./build/types/index.types.d.ts"
+    },
+    "./import": {
+      "import": {
+        "default": "./build/import-hook.mjs"
+      }
     }
   },
-  "scripts": {
-    "build": "tsc",
-    "prepublish": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "typesVersions": {
+    "<4.9": {
+      "build/npm/types/index.d.ts": [
+        "build/npm/types-ts3.8/index.d.ts"
+      ]
+    }
   },
-  "author": "Decipher AI",
-  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@decipher-sdk/frontend": "^0.0.25",
+    "@decipher-sdk/types": "^0.0.1",
+    "@decipher-sdk/utils": "^0.0.4",
+    "@sentry/utils": "^8.7.0",
+    "axios": "^1.6.7",
+    "cross-fetch": "^4.0.0",
+    "dotenv": "^16.4.5",
+    "glob": "^10.3.14",
+    "magic-string": "^0.30.10",
+    "next": "^13.2.0 || ^14.0",
+    "react": "16.x || 17.x || 18.x",
+    "react-dom": "^18.2.0",
+    "resolve": "^1.22.8",
+    "stacktrace-parser": "^0.1.10",
+    "unplugin": "^1.10.1",
+    "uuid": "^9.0.1",
+    "webpack": ">= 5.0.0"
+  },
   "devDependencies": {
+    "@sentry-internal/rollup-utils": "file:../rollup-utils/sentry-internal-rollup-utils-8.7.0.tgz",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.27",
     "@types/react": "^18.2.56",
     "@types/react-dom": "^18.2.19",
     "@types/resolve": "^1.20.6",
     "@types/uuid": "^9.0.8",
+    "downlevel-dts": "^0.11.0",
     "jest": "^29.7.0",
     "node-mocks-http": "^1.14.1",
+    "rollup": "^4.18.0",
     "ts-jest": "^29.1.2",
     "typescript": "^5.3.3"
   },
-  "dependencies": {
-    "@decipher-sdk/frontend": "^0.0.22",
-    "@decipher-sdk/types": "^0.0.1",
-    "@decipher-sdk/utils": "^0.0.2",
-    "axios": "^1.6.7",
-    "cross-fetch": "^4.0.0",
-    "dotenv": "^16.4.5",
-    "glob": "^10.3.14",
-    "magic-string": "^0.30.10",
-    "next": "^14.1.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "resolve": "^1.22.8",
-    "stacktrace-parser": "^0.1.10",
-    "unplugin": "^1.10.1",
-    "uuid": "^9.0.1",
-    "webpack": "^5.91.0"
-  }
+  "peerDependencies": {
+    "next": "^13.2.0 || ^14.0",
+    "react": "16.x || 17.x || 18.x",
+    "webpack": ">= 5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "webpack": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "build": "run-p build:transpile build:types",
+    "build:dev": "yarn build",
+    "build:transpile": "ts-node scripts/buildRollup.ts",
+    "build:types": "run-s build:types:core build:types:downlevel",
+    "build:types:core": "tsc -p tsconfig.types.json",
+    "build:types:downlevel": "yarn downlevel-dts build/types build/types-ts3.8 --to ts3.8",
+    "build:watch": "run-p build:transpile:watch build:types:watch",
+    "build:dev:watch": "yarn build:watch",
+    "build:transpile:watch": "nodemon --ext ts --watch src scripts/buildRollup.ts",
+    "build:types:watch": "tsc -p tsconfig.types.json --watch",
+    "build:tarball": "ts-node ../../scripts/prepack.ts && npm pack ./build",
+    "circularDepCheck": "madge --circular src/index.client.ts && madge --circular src/edge/index.ts && madge --circular src/index.server.ts && madge --circular src/index.types.ts",
+    "clean": "rimraf build coverage decipher-sdk-nextjs-*.tgz",
+    "fix": "eslint . --format stylish --fix",
+    "lint": "eslint . --format stylish",
+    "test": "yarn test:unit",
+    "test:all": "run-s test:unit test:integration",
+    "test:unit": "jest",
+    "test:integration": "./test/run-integration-tests.sh && yarn test:types",
+    "test:integration:clean": "(cd test/integration && rimraf .cache node_modules build)",
+    "test:integration:client": "yarn playwright test test/integration/test/client/",
+    "test:integration:server": "(cd test/integration && yarn test:server)",
+    "test:types": "cd test/types && yarn test",
+    "test:watch": "jest --watch",
+    "vercel:branch": "source vercel/set-up-branch-for-test-app-use.sh",
+    "vercel:project": "source vercel/make-project-use-current-branch.sh",
+    "yalc:publish": "ts-node ../../scripts/prepack.ts && yalc publish build --push --sig"
+  },
+  "sideEffects": false
 }

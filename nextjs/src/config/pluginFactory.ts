@@ -1,10 +1,7 @@
 
-import { Logger } from "../utils/logger";
+import { Logger, createLogger } from "./logger";
 import { createUnplugin, UnpluginOptions } from "unplugin";
 import { createDebugIdUploadFunction } from "./debug-id-upload";
-
-import { createLogger } from "../utils/logger";
-
 import { PluginOptions } from "./pluginOptions";
 import { normalizeUserOptions } from "./options-mapping";
 

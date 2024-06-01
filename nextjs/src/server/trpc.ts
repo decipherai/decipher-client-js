@@ -1,7 +1,7 @@
 // Inspired by https://github.com/getsentry/sentry-javascript/blob/a87af789d95c943f7b70d8906e07739a257a0f8d/packages/core/src/trpc.ts.
-import { DecipherHandlerConfig } from "./utils/handler-config";
+import { DecipherHandlerConfig } from "./handler-config";
 import { DecipherTrpcMiddlewareArguments } from "./types";
-import { collectAndSendTrpc } from "./utils/collect-and-send";
+import { collectAndSendTrpc } from "./collect-and-send";
 
 export function decipherTrpcMiddleware(config: DecipherHandlerConfig) {
   return function <T>(opts: DecipherTrpcMiddlewareArguments<T>): T {
