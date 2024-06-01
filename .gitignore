@@ -65,9 +65,11 @@ typings/
 
 # Output of 'npm pack'
 *.tgz
-
+*pnp*
 # Yarn Integrity file
 .yarn-integrity
+*yarn*
+*.yarnrc*
 
 # dotenv environment variables file
 .env
@@ -108,3 +110,11 @@ dist
 # Temp files
 tmp
 temp
+
+extras
+
+*.DS_Store
+
+rollup-utils
+*rollup.*js
+*/build/*

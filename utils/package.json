@@ -1,24 +1,75 @@
 {
   "name": "@decipher-sdk/utils",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Utilities for Decipher TypeScript SDKs",
-  "main": "dist/index.js",
-  "exports": {
-    ".": "./dist/index.js"
-  },
-  "scripts": {
-    "build": "tsc",
-    "prepublish": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
   "author": "Decipher AI",
   "license": "MIT",
-  "devDependencies": {
-    "@types/node": "^20.12.12",
-    "typescript": "^5.4.5"
+  "engines": {
+    "node": ">=14.18"
+  },
+  "files": [
+    "cjs",
+    "esm",
+    "types",
+    "types-ts3.8"
+  ],
+  "main": "build/cjs/index.js",
+  "module": "build/esm/index.js",
+  "types": "build/types/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./build/types/index.d.ts",
+        "default": "./build/esm/index.js"
+      },
+      "require": {
+        "types": "./build/types/index.d.ts",
+        "default": "./build/cjs/index.js"
+      }
+    }
+  },
+  "typesVersions": {
+    "<4.9": {
+      "build/types/index.d.ts": [
+        "build/types-ts3.8/index.d.ts"
+      ]
+    }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
-    "@decipher-sdk/types": "^0.0.1"
-  }
+    "@decipher-sdk/types": "0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.13.0",
+    "downlevel-dts": "^0.11.0",
+    "rollup": "^4.18.0",
+    "ts-node": "^10.9.2",
+    "typescript": "4.9.5"
+  },
+  "scripts": {
+    "build": "run-p build:transpile build:types",
+    "build:dev": "yarn build",
+    "build:transpile": "yarn ts-node scripts/buildRollup.ts",
+    "build:types": "run-s build:types:core build:types:downlevel",
+    "build:types:core": "tsc -p tsconfig.types.json",
+    "build:types:downlevel": "yarn downlevel-dts build/types build/types-ts3.8 --to ts3.8",
+    "build:watch": "run-p build:transpile:watch build:types:watch",
+    "build:dev:watch": "yarn build:watch",
+    "build:transpile:watch": "rollup -c rollup.npm.config.mjs --watch",
+    "build:types:watch": "tsc -p tsconfig.types.json --watch",
+    "build:tarball": "ts-node ../../scripts/prepack.ts && npm pack ./build",
+    "circularDepCheck": "madge --circular src/index.ts",
+    "clean": "rimraf build coverage cjs esm decipher-sdk-utils-*.tgz",
+    "fix": "eslint . --format stylish --fix",
+    "lint": "eslint . --format stylish",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:package": "node test/types/index.js",
+    "version": "node ../../scripts/versionbump.js src/version.ts",
+    "yalc:publish": "ts-node ../../scripts/prepack.ts && yalc publish build --push --sig"
+  },
+  "sideEffects": false
 }

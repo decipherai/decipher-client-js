@@ -1,34 +1,78 @@
 {
   "name": "@decipher-sdk/frontend",
-  "version": "0.0.23",
-  "description": "The official Decipher SDK for capturing session replays on the frontend.",
-  "main": "dist/index.js",
-  "module": "dist/esm/index.js",
-  "exports": {
-    ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/esm/index.js"
-    }
-  },
-  "type": "module",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "postinstall": "npm run build",
-    "prepublish": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
+  "version": "0.0.25",
+  "description": "Decipher SDK to capture frontend errors and replays.",
   "author": "Decipher AI",
   "license": "MIT",
-  "devDependencies": {
-    "@types/react": "^18.2.79",
-    "typescript": "^5.4.5"
+  "engines": {
+    "node": ">=14.18"
+  },
+  "files": [
+    "cjs",
+    "esm",
+    "types",
+    "types-ts3.8"
+  ],
+  "main": "build/npm/cjs/index.js",
+  "module": "build/npm/esm/index.js",
+  "types": "build/npm/types/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./build/npm/types/index.d.ts",
+        "default": "./build/npm/esm/index.js"
+      },
+      "require": {
+        "types": "./build/npm/types/index.d.ts",
+        "default": "./build/npm/cjs/index.js"
+      }
+    }
+  },
+  "typesVersions": {
+    "<4.9": {
+      "build/npm/types/index.d.ts": [
+        "build/npm/types-ts3.8/index.d.ts"
+      ]
+    }
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@decipher-sdk/types": "^0.0.1",
-    "@decipher-sdk/utils": "^0.0.2",
-    "react": "^18.2.0",
+    "@decipher-sdk/utils": "^0.0.4",
     "rrweb": "^2.0.0-alpha.4"
-  }
+  },
+  "devDependencies": {
+    "@rrweb/types": "^2.0.0-alpha.14",
+    "@sentry-internal/rollup-utils": "file:../rollup-utils/sentry-internal-rollup-utils-8.7.0.tgz",
+    "downlevel-dts": "^0.11.0"
+  },
+  "scripts": {
+    "build": "run-p build:transpile build:bundle build:types",
+    "build:dev": "yarn build",
+    "build:bundle": "rollup -c rollup.bundle.config.mjs",
+    "build:transpile": "rollup -c rollup.npm.config.mjs",
+    "build:types": "run-s build:types:core build:types:downlevel",
+    "build:types:core": "tsc -p tsconfig.types.json",
+    "build:types:downlevel": "yarn downlevel-dts build/npm/types build/npm/types-ts3.8 --to ts3.8",
+    "build:watch": "run-p build:transpile:watch build:bundle:watch build:types:watch",
+    "build:dev:watch": "run-p build:transpile:watch build:types:watch",
+    "build:bundle:watch": "rollup -c rollup.bundle.config.mjs --watch",
+    "build:transpile:watch": "rollup -c rollup.npm.config.mjs --watch",
+    "build:types:watch": "tsc -p tsconfig.types.json --watch",
+    "build:tarball": "ts-node ../../scripts/prepack.ts --bundles && npm pack ./build/npm",
+    "circularDepCheck": "madge --circular src/index.ts",
+    "clean": "rimraf build coverage .rpt2_cache decipher-sdk-frontend-*.tgz",
+    "fix": "eslint . --format stylish --fix",
+    "lint": "eslint . --format stylish",
+    "size:check": "cat build/bundles/bundle.min.js | gzip -9 | wc -c | awk '{$1=$1/1024; print \"ES2017: \",$1,\"kB\";}'",
+    "test": "yarn test:unit",
+    "test:unit": "jest",
+    "test:package": "node test/package/npm-build.js && rm test/package/tmp.js",
+    "test:unit:watch": "jest --watch",
+    "yalc:publish": "ts-node ../../scripts/prepack.ts --bundles && yalc publish ./build/npm --push --sig"
+  },
+  "sideEffects": false
 }
