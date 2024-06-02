@@ -18,7 +18,7 @@ import type {
   EntryPropertyObject,
 } from "./types";
 import { getWebpackPluginOptions } from "./webpackPluginOptions";
-import { decipherWebpackPlugin } from "./decipherWebpackPlugin";
+import { loadModule } from "./loadModule";
 /**
  * Checks whether the given input is already an array, and if it isn't, wraps it in one.
  *
@@ -60,6 +60,8 @@ export function constructWebpackConfigFunction(
     const newConfig = setUpModuleRules(rawNewConfig);
 
     if (!isDev) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { decipherWebpackPlugin } = loadModule('@decipher-sdk/webpack-plugin') as any;
       if (decipherWebpackPlugin) {
         newConfig.devtool = !isServer ? "hidden-source-map" : "source-map";
 

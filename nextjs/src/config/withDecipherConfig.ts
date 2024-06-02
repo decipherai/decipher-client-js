@@ -32,7 +32,6 @@ export function withDecipherConfig<C>(nextConfig: C, decipherBuildOptions: Decip
       ...webpackConfigFunctionArgs: unknown[]
     ): ReturnType<NextConfigFunction> {
       const maybePromiseNextConfig: ReturnType<typeof castNextConfig> =
-        // @ts-expect-error
         castNextConfig.apply(this, webpackConfigFunctionArgs);
 
       if (isThenable(maybePromiseNextConfig)) {
