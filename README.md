@@ -26,6 +26,35 @@ To integrate Decipher into your Next.js or Express application, please follow th
 
 ## Examples
 
+### NextJS
+
+First install the package:
+
+```bash
+npm install @decipher-sdk/nextjs
+```
+
+Then update your NextConfig using `withDecipherConfig`.
+
+```typescript
+/** @type {import('next').NextConfig} */
+import { withDecipherConfig } from "@decipher-sdk/nextjs";
+
+const nextConfig = {
+  // ...your existing NextConfig
+};
+
+export default withDecipherConfig(nextConfig, {
+  apiKey: "YOUR_DECIPHER_API_KEY", // From the https://app.getdecipher.com/settings page.
+  customerId: "YOUR_CUSTOMER_ID", // From the https://app.getdecipher.com/settings page.
+  frontendCodebaseId: "YOUR_FRONTEND_CODEBASE_NAME", // You pick this name to group your frontend errors.
+});
+```
+
+If you have another function that computes your config (e.g. withSentryConfig) have the withDecipherConfig wrap that.
+
+Decipher will now automatically capture frontend errors and session replays, as well as upload production sourcemaps upon new releases of your app and include source code in your error stack traces.
+
 ### Express
 
 First install the package:
